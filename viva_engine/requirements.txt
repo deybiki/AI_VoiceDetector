@@ -1,0 +1,11 @@
+streamlit
+requests
+openai
+python-dotenv
+retry
+edge-tts
+SpeechRecognition
+sounddevice
+scipy
+pymongo
+opencv-python
