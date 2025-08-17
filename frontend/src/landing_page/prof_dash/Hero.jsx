@@ -75,8 +75,11 @@ function Hero() {
   const location = useLocation();
 
   // Extract username from pathname
-  const usernamePath = location.pathname.split("/").filter(Boolean).pop();
-  const username = usernamePath || localStorage.getItem("username") || "User";
+  const username = localStorage.getItem("username");
+  const displayName = username
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -99,7 +102,7 @@ function Hero() {
         style={{ backgroundColor: "#cce5ff", fontSize: "1.5rem", fontWeight: "500", borderBottom: "2px solid #b8daff" }}>
         <div className="d-flex align-items-center gap-2">
           <i className="fa fa-graduation-cap" aria-hidden="true" style={{ fontSize: "2rem", color: "#004085" }}></i>
-          <span className="text-dark">Welcome <strong>{username}</strong></span>
+          <span className="text-dark">Welcome <strong>{displayName}</strong></span>
         </div>
         <button className="btn btn-danger btn-sm px-3 fw-semibold" onClick={handleLogout}>
           Logout

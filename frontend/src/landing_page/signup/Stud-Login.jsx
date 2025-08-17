@@ -202,8 +202,10 @@ const Stud_Login = () => {
       localStorage.setItem("profile", JSON.stringify(data.profile));
 
 // ✅ Use scholarId for the viva system, NOT username
-      if (data.profile && data.profile.scholarId) {
+      if (data.profile && data.profile.scholarId && data.profile.image) {
         localStorage.setItem("username", data.profile.scholarId);  
+        localStorage.setItem("image",data.profile.image);
+        console.log("image link: ",data.profile.image);
         console.log(" Stored scholarId:", data.profile.scholarId);
       } else {
         console.warn("⚠️ scholarId not found in profile data");
