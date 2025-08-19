@@ -1,0 +1,20 @@
+[
+    {
+        "question": "What is Unsupervised learning ?",
+        "answer": "unsupervised learning is a machine learning technique where used for which deal with a level data set",
+        "gpt_4_score": 2.0,
+        "gemini_1.5_score": -1.0,
+        "opus_4_score": 5.0,
+        "llama_3.3_score": -1.0,
+        "average_score": 3.5
+    },
+    {
+        "question": "What is overfitting problem ?",
+        "answer": "overfitting is a problem in machine learning where the data performs very well in case of training data but only on test data",
+        "gpt_4_score": 4.0,
+        "gemini_1.5_score": -1.0,
+        "opus_4_score": 8.0,
+        "llama_3.3_score": -1.0,
+        "average_score": 6.0
+    }
+]

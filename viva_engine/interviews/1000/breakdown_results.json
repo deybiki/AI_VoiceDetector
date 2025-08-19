@@ -1,0 +1,28 @@
+[
+    {
+        "question": "What is a process OS ?",
+        "answer": "a process in operating system is program under execution each processes having its own code data and PCB",
+        "gpt_4_score": 4.0,
+        "gemini_1.5_score": -1.0,
+        "opus_4_score": 8.0,
+        "llama_3.3_score": -1.0,
+        "average_score": 6.0,
+        "gpt_feedback": "N/A",
+        "claude_feedback": "Correct basic definition but lacks detail on process characteristics, states, memory management, and could better explain PCB's role.",
+        "gemini_feedback": "Partially correct, but lacks detail on the role of the OS in managing processes (e.g., scheduling, resource allocation).",
+        "llama_feedback": "N/A"
+    },
+    {
+        "question": "What is system call in OS ?",
+        "answer": "system call in operating system is a call made by different applications present in the system to the kernel which is also called as the core operating system",
+        "gpt_4_score": 6.0,
+        "gemini_1.5_score": -1.0,
+        "opus_4_score": 8.0,
+        "llama_3.3_score": -1.0,
+        "average_score": 7.0,
+        "gpt_feedback": "N/A",
+        "claude_feedback": "N/A",
+        "gemini_feedback": "Correct, but could be more specific by mentioning that it requests a service.",
+        "llama_feedback": "N/A"
+    }
+]

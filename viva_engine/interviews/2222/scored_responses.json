@@ -1,0 +1,20 @@
+[
+    {
+        "question": "What is Unsupervised learning ?",
+        "answer": "unsupervised learning is a type is a type of machine learning where the machine repairing or model with unlabeled data set",
+        "gpt_4_score": 4.0,
+        "gemini_1.5_score": 4.0,
+        "opus_4_score": 7.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 5.25
+    },
+    {
+        "question": "What is overfitting problem ?",
+        "answer": "open fitting is a problem when your test data when a data works perfectly in case of test but not in perfect of train data",
+        "gpt_4_score": 2.0,
+        "gemini_1.5_score": -1.0,
+        "opus_4_score": 5.0,
+        "llama_3.3_score": -1.0,
+        "average_score": 3.5
+    }
+]

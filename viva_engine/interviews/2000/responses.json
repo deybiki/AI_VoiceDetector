@@ -1,0 +1,14 @@
+[
+    {
+        "question_number": 1,
+        "question": "What is Unsupervised learning ?",
+        "audio_file": "interviews\\2000\\q1_answer.wav",
+        "transcript": "unsupervised learning is a machine learning technique where used for which deal with a level data set"
+    },
+    {
+        "question_number": 2,
+        "question": "What is overfitting problem ?",
+        "audio_file": "interviews\\2000\\q2_answer.wav",
+        "transcript": "overfitting is a problem in machine learning where the data performs very well in case of training data but only on test data"
+    }
+]
