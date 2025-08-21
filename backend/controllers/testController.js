@@ -1,15 +1,17 @@
 import Test from "../models/Test.js";
 import Question from "../models/Question.js";
+import TestAnswer from "../models/TestAnswer.js";
 import TestAttempt from "../models/TestAttempt.js";
 import { v4 as uuidv4 } from "uuid";
 import Student from "../models/Student.js";
 import User from "../models/User.js";
 import Examiner from "../models/Examiner.js";
+import xlsx from "xlsx";
 
 export const createTest = async (req, res) => {
    try {
       // console.log("req body:",req.body);
-      const { title, start_time, end_time, department } = req.body;
+      const { title, start_time,description, end_time, department } = req.body;
       let { scholarIds } = req.body;
 
       const sharedLinkId = uuidv4();
@@ -34,6 +36,7 @@ export const createTest = async (req, res) => {
       const test = await Test.create({
          title,
          examiner: examinerId,
+         description,
          department,
          start_time,
          end_time,
@@ -95,30 +98,90 @@ export const addQuestion = async (req, res) => {
    }
 };
 
+// export const addQuestions = async (req, res) => {
+//    try {
+//       const { testId } = req.params;
+//       const { questions } = req.body;
+
+//       if (!testId || !Array.isArray(questions))
+//          return res.status(400).json({ msg: "Invalid testId or questions" });
+
+//       const test = await Test.findById(testId);
+//       if (!test) return res.status(404).json({ msg: "Test not found" });
+
+//       const docs = await Promise.all(
+//          questions.map(qt => Question.create({ testId, questionText: qt }))
+//       );
+
+//       test.questions.push(...docs.map(d => d._id));
+
+//       await test.save();
+
+//       res.status(200).json({ msg: "Questions added successfully" });
+//    } catch (err) {
+//       console.error("Add questions error:", err);
+//       res.status(500).json({ msg: "Server error while adding questions" });
+//    }
+// };
+
 export const addQuestions = async (req, res) => {
-   try {
-      const { testId } = req.params;
-      const { questions } = req.body;
+  try {
+    const { testId } = req.params;
+    const { file } = req;
 
-      if (!testId || !Array.isArray(questions))
-         return res.status(400).json({ msg: "Invalid testId or questions" });
+    if (!testId || !file) {
+      return res.status(400).json({ msg: "Invalid testId or file missing" });
+    }
 
-      const test = await Test.findById(testId);
-      if (!test) return res.status(404).json({ msg: "Test not found" });
+    const test = await Test.findById(testId);
+    if (!test) return res.status(404).json({ msg: "Test not found" });
 
-      const docs = await Promise.all(
-         questions.map(qt => Question.create({ testId, questionText: qt }))
-      );
+    // Parse Excel
+    const workbook = xlsx.read(file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
-      test.questions.push(...docs.map(d => d._id));
+    if (!jsonData.length) {
+      return res.status(400).json({ msg: "Excel file is empty" });
+    }
 
-      await test.save();
+    // Extract and save questions + answers
+    const questionDocs = [];
+    const answerDocs = [];
 
-      res.status(200).json({ msg: "Questions added successfully" });
-   } catch (err) {
-      console.error("Add questions error:", err);
-      res.status(500).json({ msg: "Server error while adding questions" });
-   }
+    for (const row of jsonData) {
+      if (!row.questionText || !row.answerText) continue;
+
+      const qDoc = await Question.create({
+        testId,
+        questionText: row.questionText,
+      });
+
+      const aDoc = await TestAnswer.create({
+        testId,
+      //   questionId: qDoc._id,
+        answerText: row.answerText,
+      });
+
+      questionDocs.push(qDoc);
+      answerDocs.push(aDoc);
+    }
+
+    // Push to test model
+    test.questions.push(...questionDocs.map(q => q._id));
+    test.answers.push(...answerDocs.map(a => a._id));
+    await test.save();
+
+    res.status(200).json({
+      msg: "Questions and Answers added successfully from Excel",
+      questionsAdded: questionDocs.length,
+      answersAdded: answerDocs.length,
+    });
+  } catch (err) {
+    console.error("Add questions error:", err);
+    res.status(500).json({ msg: "Server error while adding questions/answers" });
+  }
 };
 
 export const removeTest = async (req, res) => {

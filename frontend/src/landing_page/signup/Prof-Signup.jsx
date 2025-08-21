@@ -141,12 +141,12 @@ const Prof_Signup = ({ onClose }) => {
             required
           />
         </div>
-        <div className="form-check">
-          <input type="checkbox" id="agree" required />
-          <label htmlFor="agree">
+        {/* <div className="form-check"> */}
+          {/* <input type="checkbox" id="agree" required /> */}
+          {/* <label htmlFor="agree">
             I agree to the AI Voice Detector <a href="/terms">user agreement</a>
-          </label>
-        </div>
+          </label> */}
+        {/* </div> */}
         <button type="submit" className="submit-btn">
           Create an Account
         </button>

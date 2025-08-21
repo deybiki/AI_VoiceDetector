@@ -270,12 +270,12 @@ const Stud_Login = () => {
             required
           />
         </div>
-        <div className="form-check">
+        {/* <div className="form-check">
           <input type="checkbox" id="agree" required />
           <label htmlFor="agree">
             I agree to the AI Voice Detector <a href="/terms">user agreement</a>
           </label>
-        </div>
+        </div> */}
         <button type="submit" className="submit-btn">
           Login
         </button>

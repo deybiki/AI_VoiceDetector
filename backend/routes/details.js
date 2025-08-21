@@ -4,6 +4,7 @@ import {
    getAllProfEmails,
    getAllStudentScholarId,
    getUnaddedStudentScholarId,
+   getBranchSpecificScholarId,
 } from "../controllers/detailsController.js";
 import transporter from "../utils/mailer.js";
 
@@ -14,6 +15,7 @@ router.get("/allStudentEmails", getAllStudentEmails);
 router.get("/allProfEmails", getAllProfEmails);
 router.get("/unaddedScholarId/:testId", getUnaddedStudentScholarId);
 router.get("/allStudentScholarId", getAllStudentScholarId);
+router.get("/studentsByBranch/:department",getBranchSpecificScholarId);
 
 
 export default router;

@@ -58,3 +58,30 @@ export const getAllStudentScholarId = async (req, res) => {
       res.status(500).json({ msg: "Server error" });
    }
 }
+
+export const getBranchSpecificScholarId= async(req,res)=>{
+   try {
+    const { department } = req.params;
+    const students = await Student.find({ department }).select("scholarId"); // apke Student model ke hisaab se adjust karo
+    res.json({
+      scholarIds: students.map(s => s.scholarId),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to fetch students by branch" });
+  }
+}
+// routes/details.js
+// router.get("/studentsByBranch/:branch", verifyToken, authorizeRoles("examiner"), async (req, res) => {
+//   try {
+//     const { branch } = req.params;
+//     const students = await Student.find({ branch }).select("scholarId"); // apke Student model ke hisaab se adjust karo
+//     res.json({
+//       scholarIds: students.map(s => s.scholarId),
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ msg: "Failed to fetch students by branch" });
+//   }
+// });
+
