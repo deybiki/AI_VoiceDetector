@@ -44,9 +44,12 @@ const vivaResultSchema = new mongoose.Schema({
       answer: String,
       score: Number,
       feedback: String
+      
     }
   ],
   totalScore: Number,
+  questionAverages: [Number],
+  cosineSimilarities: [Number],
   detailedBreakdown: Object,
 });
 

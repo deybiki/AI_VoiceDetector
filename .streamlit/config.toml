@@ -1,0 +1,6 @@
+[theme]
+base="light"          # Force light mode (white background)
+primaryColor="#1E90FF"  # Optional: DodgerBlue for buttons/highlights
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F5F5F5"
+textColor="#000000"

@@ -1,39 +1,3 @@
-// import express from "express";
-
-
-
-// const express = require("express");
-// const router = express.Router();
-// const VivaResult = require("E:\AI_Viva_system\AI_VoiceDetector-master\backend\models\VivaResult.js"); // Adjust path if different
-
-// // POST route to save viva results
-// router.post("/submit-viva", async (req, res) => {
-//   const {
-//     candidateId,
-//     questionAnswerPairs,
-//     totalScore,
-//     detailedBreakdown,
-//     vivaDate
-//   } = req.body;
-
-//   try {
-//     const vivaResult = new VivaResult({
-//       candidateId,
-//       questionAnswerPairs,
-//       totalScore,
-//       detailedBreakdown,
-//       vivaDate
-//     });
-
-//     await vivaResult.save();
-//     res.status(200).json({ message: "Viva result saved successfully" });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
-
-// module.exports = router;
 
 
 
@@ -55,7 +19,9 @@ router.post("/submit-viva", async (req, res) => {
     questionAnswerPairs,
     totalScore,
     detailedBreakdown,
-    vivaDate
+    vivaDate,
+    questionAverages,
+    cosineSimilarities
   } = req.body;
 
   try {
@@ -64,7 +30,9 @@ router.post("/submit-viva", async (req, res) => {
       questionAnswerPairs,
       totalScore,
       detailedBreakdown,
-      vivaDate
+      vivaDate,
+      questionAverages,
+      cosineSimilarities
     });
 
     await vivaResult.save();
