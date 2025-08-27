@@ -112,7 +112,7 @@ function Hero() {
       <div className="container mt-4">
         <div className="row justify-content-center text-center">
           <img
-            src="/proj_img/gpt4.png"
+            src="/proj_img/phead.png"
             alt="Hero"
             className="mb-2"
             style={{ width: "750px", height: "auto" }}

@@ -142,7 +142,7 @@ function Hero() {
         {/* Hero Image (Center) */}
         <div className="flex-grow-1 d-flex justify-content-center">
           <img
-            src="/proj_img/gpt5.png"
+            src="/proj_img/gptsh.png"
             alt="Hero"
             style={{ maxWidth: "750px", width: "100%", height: "auto" }}
           />
