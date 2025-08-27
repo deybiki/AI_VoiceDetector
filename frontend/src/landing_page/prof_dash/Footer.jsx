@@ -9,15 +9,8 @@ import CreatableSelect from "react-select/creatable";
 import { useNavigate } from "react-router-dom";
 
 const TestFormSection = () => {
-  //const { profName } = useParams();
-  // const username = localStorage.getItem("username");
-
   const navigate = useNavigate();
 
-  // const displayName = username
-  //    .split("-")
-  //    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-  //    .join(" ");
   const username = localStorage.getItem("username") || "";
   const displayName = username
     ? username
@@ -36,10 +29,9 @@ const TestFormSection = () => {
     "Civil",
     "Instrumentation",
     "Electrical",
-  ]); // aap backend se bhi fetch kar sakte ho
+  ]);
   const [selecteddepartment, setSelecteddepartment] = useState("");
 
-  // const [evaluatorOptions, setEvaluatorOptions] = useState([]);
   const [evaluators, setEvaluators] = useState([]);
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
@@ -53,27 +45,7 @@ const TestFormSection = () => {
     department: "",
   });
 
-  // Fetch student emails
-  useEffect(() => {
-    const fetchScholarIds = async () => {
-      try {
-        const res = await axios.get(
-          "http://localhost:5000/api/details/allStudentScholarId",
-          { withCredentials: true }
-        );
-        const options = res.data.scholarIds.map((scholarId) => ({
-          label: scholarId,
-          value: scholarId,
-        }));
-        setStudentOptions(options);
-      } catch (err) {
-        console.log(err);
-        toast.error("Failed to load student footer scholar ids");
-      }
-    };
-   
-  }, []);
-
+  // Fetch Scholar IDs by branch
   const fetchScholarIdsByBranch = async (department) => {
     try {
       const res = await axios.get(
@@ -84,7 +56,7 @@ const TestFormSection = () => {
         label: scholarId,
         value: scholarId,
       }));
-      setStudentOptions(options);
+      setStudentOptions([{ value: "all", label: "Select All" }, ...options]);
     } catch (err) {
       console.log(err);
       toast.error("Failed to load scholar IDs for this branch");
@@ -93,22 +65,6 @@ const TestFormSection = () => {
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
-  };
-
-  const handleQuestionChange = (index, value) => {
-    const updated = [...formData.questions];
-    updated[index] = value;
-    setFormData({ ...formData, questions: updated });
-  };
-
-  const handleNumQuestionsChange = (e) => {
-    const num = parseInt(e.target.value);
-    const updatedQuestions = Array(num).fill("");
-    setFormData({
-      ...formData,
-      numberOfQuestions: num,
-      questions: updatedQuestions,
-    });
   };
 
   const handleSubmit = async (e) => {
@@ -138,7 +94,7 @@ const TestFormSection = () => {
       const { test } = createTestRes.data;
       const testId = test._id;
 
-      // Upload Excel sheet for questions + answers
+      // Upload Excel sheet
       const formDataExcel = new FormData();
       formDataExcel.append("file", file);
 
@@ -151,19 +107,8 @@ const TestFormSection = () => {
         }
       );
 
-      // const questionPayload = {
-      //    testId,
-      //    questions: formData.questions,
-      // };
-
-      // await axios.post(
-      //    `http://localhost:5000/api/test/${testId}/questions`,
-      //    questionPayload,
-      //    { withCredentials: true }
-      // );
-
+      // Evaluators
       const evaluatorEmails = evaluators.map((e) => e.value).filter(Boolean);
-
       if (evaluatorEmails.length > 0) {
         await axios.post(
           `http://localhost:5000/api/examiner/invite-evaluator/${testId}`,
@@ -172,7 +117,7 @@ const TestFormSection = () => {
         );
       }
 
-      // Reset everything
+      // Reset
       setFormData({
         professorName: displayName,
         testTitle: "",
@@ -363,7 +308,8 @@ const TestFormSection = () => {
                     />
                   </div>
                 </div>
-            {/* select students by branch */}
+
+                {/* select students by branch */}
                 <div className="mb-3">
                   <label className="form-label">Select Branch</label>
                   <Select
@@ -389,37 +335,57 @@ const TestFormSection = () => {
                     options={studentOptions}
                     isMulti
                     value={selectedStudents}
-                    onChange={(selected) => setSelectedStudents(selected)}
+                    onChange={(selected) => {
+                      if (!selected) {
+                        setSelectedStudents([]);
+                        return;
+                      }
+
+                      const isSelectAll = selected.find(
+                        (s) => s.value === "all"
+                      );
+
+                      if (isSelectAll) {
+                        const branchStudents = studentOptions.filter(
+                          (opt) => opt.value !== "all"
+                        );
+
+                        const merged = [
+                          ...selectedStudents,
+                          ...branchStudents.filter(
+                            (opt) =>
+                              !selectedStudents.some(
+                                (s) => s.value === opt.value
+                              )
+                          ),
+                        ];
+
+                        setSelectedStudents(
+                          Array.from(
+                            new Map(merged.map((s) => [s.value, s])).values()
+                          )
+                        );
+                      } else {
+                        const merged = [
+                          ...selectedStudents.filter(
+                            (s) =>
+                              !studentOptions.some(
+                                (opt) => opt.value === s.value
+                              )
+                          ),
+                          ...selected,
+                        ];
+
+                        setSelectedStudents(
+                          Array.from(
+                            new Map(merged.map((s) => [s.value, s])).values()
+                          )
+                        );
+                      }
+                    }}
                     placeholder="Choose students..."
                   />
                 </div>
-
-                {/* <div className="mb-3">
-                           <label className="form-label">Number of Questions</label>
-                           <input
-                              type="number"
-                              min="1"
-                              required
-                              className="form-control"
-                              value={formData.numberOfQuestions}
-                              onChange={handleNumQuestionsChange}
-                           />
-                        </div>
-
-                        {formData.questions.map((q, idx) => (
-                           <div className="mb-3" key={idx}>
-                              <label className="form-label">Question {idx + 1}</label>
-                              <input
-                                 type="text"
-                                 required
-                                 className="form-control"
-                                 value={q}
-                                 onChange={(e) =>
-                                    handleQuestionChange(idx, e.target.value)
-                                 }
-                              />
-                           </div>
-                        ))} */}
 
                 {/* File Upload for Excel */}
                 <div className="mb-3">

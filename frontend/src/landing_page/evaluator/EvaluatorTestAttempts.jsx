@@ -1,35 +1,143 @@
-import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-const EvaluatorTestAttempts = () => {
-   const { testId } = useParams();
-   const [attempts, setAttempts] = useState([]);
-   const navigate = useNavigate();
+export default function EvaluatorPage() {
+  const [results, setResults] = useState([]);
+  const [feedback, setFeedback] = useState({});
+  const [remarks, setRemarks] = useState({});
+  const [submitted, setSubmitted] = useState({}); // ✅ track submissions
 
-   useEffect(() => {
-      axios.get(`http://localhost:5000/api/evaluator/test/${testId}/attempts`, { withCredentials: true })
-         .then(res => setAttempts(res.data.attemptedTests))
-         .catch(() => toast.error("Could not fetch attempts"));
-   }, [testId]);
+  const { testId } = useParams();
+  console.log("testId:", testId);
 
-   return (
-      <div className="container mt-4">
-         <h3>Student Attempts</h3>
-         {attempts.length === 0 && <div>No submissions yet.</div>}
-         <ul className="list-group">
-            {attempts.map(attempt => (
-               <li key={attempt._id} className="list-group-item d-flex justify-content-between">
-                  <span>{attempt.student.user?.name} ({attempt.student.scholarId})</span>
-                  <button className="btn btn-sm btn-outline-info"
-                     onClick={() => navigate(`/evaluator/review/${attempt._id}`)}
-                  >Review Answers</button>
-               </li>
-            ))}
-         </ul>
-      </div>
-   );
-};
+  useEffect(() => {
+    if (testId) {
+      axios
+        .get(`http://localhost:5000/api/evaluator/${testId}/results`)
+        .then((res) => {
+          console.log("📌 Viva Results:", res.data);
+          setResults(res.data);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [testId]);
 
-export default EvaluatorTestAttempts;
+  // ⭐ star rating setter
+  const handleStarClick = (studentId, rating) => {
+    setFeedback({ ...feedback, [studentId]: rating });
+  };
+
+  const handleSubmit = async (studentId) => {
+    try {
+      const starValue = feedback[studentId] || 0;
+      const score = starValue * 2; // ⭐ convert stars to marks
+
+      const payload = {
+        testId,
+        candidateId: studentId,
+        score,
+        remarks: remarks[studentId] || "",
+      };
+
+      console.log("📤 Payload being sent:", payload);
+
+      await axios.post(
+        `http://localhost:5000/api/evaluator/resultsubmit`,
+        payload
+      );
+
+      alert("Feedback submitted!");
+
+      // ✅ mark this student as submitted
+      setSubmitted((prev) => ({ ...prev, [studentId]: true }));
+    } catch (error) {
+      console.error("❌ Error submitting feedback:", error);
+    }
+  };
+
+  return (
+    <div className="container my-4">
+      <h2 className="text-center mb-4">Evaluator Page</h2>
+
+      {results.length === 0 ? (
+        <p className="text-center text-muted">No tests to evaluate</p>
+      ) : (
+        results.map((viva) => (
+          <div key={viva._id} className="card shadow-sm mb-4">
+            <div className="card-body">
+              <h5 className="card-title">Student: {viva.candidateId}</h5>
+              {/* <p className="card-text">
+                <b>Total Score:</b> {viva.totalScore}
+              </p> */}
+
+              {viva.questionAnswerPairs.map((qa, idx) => (
+                <div key={qa._id} className="mb-2">
+                  <p className="mb-1">
+                    <b>Q{idx + 1}:</b> {qa.question}
+                  </p>
+                  <p className="text-muted">
+                    <b>Answer:</b> {qa.answer}
+                  </p>
+                </div>
+              ))}
+
+              {/* ⭐ Star Rating */}
+              <div className="mb-3">
+                <label className="form-label fw-bold">Feedback (Stars):</label>
+                <div>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      onClick={() => handleStarClick(viva.candidateId, star)}
+                      style={{
+                        fontSize: "1.5rem",
+                        cursor: "pointer",
+                        color:
+                          star <= (feedback[viva.candidateId] || 0)
+                            ? "gold"
+                            : "lightgray",
+                      }}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Remarks textarea */}
+              <div className="mb-3">
+                <label className="form-label fw-bold">Remarks</label>
+                <textarea
+                  className="form-control"
+                  placeholder="Write remarks..."
+                  value={remarks[viva.candidateId] || ""}
+                  onChange={(e) =>
+                    setRemarks({
+                      ...remarks,
+                      [viva.candidateId]: e.target.value,
+                    })
+                  }
+                  disabled={submitted[viva.candidateId]} // ✅ disable if submitted
+                />
+              </div>
+
+              {/* ✅ Submit or Finished */}
+              {submitted[viva.candidateId] ? (
+                <span className="badge bg-success p-2">✅ Finished</span>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleSubmit(viva.candidateId)}
+                >
+                  Submit Feedback
+                </button>
+              )}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}

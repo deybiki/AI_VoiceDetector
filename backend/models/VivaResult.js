@@ -47,6 +47,12 @@ const vivaResultSchema = new mongoose.Schema({
     }
   ],
   totalScore: Number,
+  // ✅ Status field added
+  status: {
+    type: String,
+    enum: ["Not Evaluated", "Evaluated"], // restrict values
+    default: "Not Evaluated", // default jab naya record create hoga
+  },
   detailedBreakdown: Object,
 });
 

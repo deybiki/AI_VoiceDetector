@@ -11,6 +11,8 @@ import {
    acceptEvaluatorAssignment,
    deleteEvaluator,
    deleteMe,
+   getVivaResultsByTest,
+   submitFeedback,
 } from "../controllers/evaluatorController.js";
 
 import { requireEvaluatorAuth } from "../middlewares/evaluatorMiddleware.js";
@@ -30,6 +32,8 @@ router.post("/reset-password", resetEvaluatorPassword);
 
 router.get('/accept', acceptEvaluatorAssignment);
 
-router.delete("/me", requireEvaluatorAuth, deleteMe)
+router.delete("/me", requireEvaluatorAuth, deleteMe);
+router.get("/:testId/results", getVivaResultsByTest);
+router.post("/resultsubmit", submitFeedback);
 
 export default router;

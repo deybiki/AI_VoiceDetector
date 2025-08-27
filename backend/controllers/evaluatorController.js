@@ -8,6 +8,8 @@ import transporter from "../utils/mailer.js";
 import { sendEvaluatorInviteMail, sendEvaluatorAssignmentMail } from '../utils/evaluatorMailTemplate.js';
 import Evaluator from '../models/Evaluator.js';
 import TestAttempt from '../models/TestAttempt.js';
+import VivaResult from '../models/VivaResult.js';
+import EvaluatorResponse from '../models/EvaluatorResponse.js';
 
 function generatePassword(length = 10) {
    return crypto.randomBytes(length).toString('base64').slice(0, length);
@@ -305,3 +307,56 @@ export const deleteEvaluator = async (req, res) => {
       res.status(500).json({ msg: "Internal error occurred", error: error.message });
    }
 }
+
+
+export const getVivaResultsByTest = async (req, res) => {
+  try {
+    const { testId } = req.params;
+    console.log("getVivaResultsByTest", testId);
+
+    // sirf wahi results jinke _id aur status match kare
+    const vivaResults = await VivaResult.find({
+      _id: testId,
+      status: "Not Evaluated",
+    });
+
+    if (!vivaResults || vivaResults.length === 0) {
+      return res.status(404).json({ message: "No viva results found for this test" });
+    }
+
+    res.json(vivaResults);
+  } catch (err) {
+    console.error("❌ Error in getVivaResultsByTest:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// ✅ Submit evaluator feedback
+export const submitFeedback = async (req, res) => {
+  try {
+   console.log("submit");
+    const {  candidateId, testId, score, remarks } = req.body;
+
+    const evaluatorEntry = new EvaluatorResponse({
+    
+      
+      testId,
+      candidateId,
+      score,
+      remarks
+      
+    });
+console.log("submit");
+    await evaluatorEntry.save();console.log("submit");
+    // ✅ Step 2: Update VivaResult status
+    await VivaResult.findOneAndUpdate(
+      { _id: testId, candidateId: candidateId },
+      { $set: { status: "Evaluated" } },
+      { new: true }
+    );
+    res.json({ message: "Feedback submitted successfully", evaluatorEntry });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
