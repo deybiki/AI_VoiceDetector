@@ -44,6 +44,7 @@ const vivaResultSchema = new mongoose.Schema({
       answer: String,
       score: Number,
       feedback: String
+      
     }
   ],
   totalScore: Number,
@@ -53,6 +54,8 @@ const vivaResultSchema = new mongoose.Schema({
     enum: ["Not Evaluated", "Evaluated"], // restrict values
     default: "Not Evaluated", // default jab naya record create hoga
   },
+  questionAverages: [Number],
+  cosineSimilarities: [Number],
   detailedBreakdown: Object,
 });
 

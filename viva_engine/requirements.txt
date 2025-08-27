@@ -9,3 +9,5 @@ sounddevice
 scipy
 pymongo
 opencv-python
+Groq
+SentenceTransformer

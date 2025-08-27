@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 import time, json, os, subprocess, asyncio, tempfile, threading, datetime
 import edge_tts, speech_recognition as sr, sounddevice as sd
@@ -14,7 +13,7 @@ import streamlit.components.v1 as components
 
 # --- COMPONENT IMPORTS ---
 from face_monitor import render_face_monitor, ensure_camera_started
-from llm_scoring import score_all_responses, generate_analysis_responses
+from llm_scoring import score_all_responses ,score_single_response
 
 st.set_page_config(page_title="AI Viva System", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""<style>[data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}</style>""", unsafe_allow_html=True)
@@ -89,10 +88,37 @@ student_id = str(query_params.get("studentId", "")).strip()
 if not test_id or not student_id: st.error("❌ Missing IDs"); st.stop()
 test_data = tests_collection.find_one({"sharedLinkId": test_id})
 if not test_data: st.error("❌ Invalid Test ID"); st.stop()
+# qids = test_data.get("questions", [])
+# questions = [q.get("questionText","Error") for q in db.get_collection("questions")
+#              .find({"_id": {"$in": [ObjectId(x) for x in qids]}})]
+# if not questions: st.error("❌ No questions resolved"); st.stop()
+
+  # debug in terminal
 qids = test_data.get("questions", [])
-questions = [q.get("questionText","Error") for q in db.get_collection("questions")
-             .find({"_id": {"$in": [ObjectId(x) for x in qids]}})]
-if not questions: st.error("❌ No questions resolved"); st.stop()
+
+# Fetch all answers for this test
+answers_data = list(db.get_collection("testanswers").find({"testId": ObjectId(test_data["_id"])}))
+
+questions, reference_answers = [], []
+
+# Maintain same order as qids
+for q in db.get_collection("questions").find({"_id": {"$in": [ObjectId(x) for x in qids]}}):
+    questions.append(q.get("questionText", "Error"))
+
+# Just align answers in insertion order (since no questionId is present)
+reference_answers = [a.get("answerText", "") for a in answers_data]
+
+if not questions:
+    st.error("❌ No questions resolved")
+    st.stop()
+
+st.session_state.reference_answers = reference_answers
+print("✅ Loaded reference answers:", reference_answers)
+
+
+
+
+
 
 # ---------- reset state on new/returning candidate ----------
 if st.session_state.get("candidate_id") != student_id:
@@ -104,6 +130,14 @@ if st.session_state.get("candidate_id") != student_id:
     st.session_state.id_confirmed = False
     st.session_state.is_recording = False
     st.session_state.recording_complete = False
+
+
+    attempt_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    st.session_state.attempt_dir = os.path.join(
+        "interviews",
+        f"{st.session_state.candidate_id}_{attempt_id}"
+    )
+    os.makedirs(st.session_state.attempt_dir, exist_ok=True)
 
 def show_countdown(message, secs=3):
     ph = st.empty()
@@ -209,16 +243,85 @@ if not st.session_state.id_confirmed:
 
 # ---------- start interview: welcome is BLOCKING, then start camera ----------
 
+#
+
+
+
+# ---------- rules popup (before showing Start button) ----------
+
+# import streamlit as st
+
+if "rules_accepted" not in st.session_state:
+    st.session_state.rules_accepted = False
+if "interview_started" not in st.session_state:
+    st.session_state.interview_started = False
+
+# -------------------
+
+
+
+
+# ---------- confirm ID ----------
+if not st.session_state.id_confirmed:
+    cand_in = st.text_input("Enter your Candidate ID to begin:", value=student_id)
+    if st.button("Confirm ID"):
+        if cand_in == student_id:
+            st.session_state.id_confirmed = True
+            # ✅ Show banner here only once
+            st.success(f"ID '{student_id}' registered successfully.")
+            st.rerun()
+        else:
+            st.error("❌ Entered ID does not match.")
+    st.stop()
+
+# ---------- Rules Page ----------
+if not st.session_state.rules_accepted:
+    st.header("Viva Rules & Regulations")
+    st.markdown(
+        """
+        - Camera must remain **ON** during viva.  
+        - Face must remain **clearly visible**.  
+        - No background noise or external help.  
+        - Answer clearly within the **time limit**.  
+        - Once you proceed, viva will begin.  
+        """
+    )
+
+    agree = st.checkbox(" I have read and agree to the rules")
+    proceed_btn = st.button("Proceed", disabled=not agree)
+
+    st.markdown(
+        """
+        <style>
+        div.stButton > button {
+            background-color: #4285F4 !important;
+            color: white !important;
+            font-weight: bold;
+            border-radius: 8px;
+            height: 3em;
+        }
+        div.stButton > button:disabled {
+            background-color: #a0c4ff !important;
+            color: white !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if proceed_btn and agree:
+        st.session_state.rules_accepted = True
+        st.rerun()
+    st.stop()
+
+# ---------- Start Test Page ----------
 if not st.session_state.interview_started:
-    st.success(f"ID '{st.session_state.candidate_id}' registered. You may start the Viva")
-    
-    if st.button("Start Test"):
+    st.success(" Click Start Test to begin the viva.")
+
+    if st.button("Start Test", key="start_test_btn"):
         with st.spinner("Playing welcome message..."):
             speak("Welcome to this Examination. Please listen carefully and answer within the time limit.")
-        
-        # auto-select and start camera
-        ensure_camera_started()  
-        
+        ensure_camera_started()
         st.session_state.interview_started = True
         st.rerun()
     st.stop()
@@ -226,122 +329,11 @@ if not st.session_state.interview_started:
 
 
 
-# ---------- rules popup (before showing Start button) ----------
-
-
-# # Initialize session state
-# if "interview_started" not in st.session_state:
-#     st.session_state.interview_started = False
-# if "rules_done" not in st.session_state:
-#     st.session_state.rules_done = False
-
-# if not st.session_state.interview_started:
-
-#     if not st.session_state.rules_done:
-#         # ✅ Show modal popup
-#         components.html(
-#             """
-#             <style>
-#             body { margin: 0; }
-#             .overlay {
-#               position: fixed;
-#               top: 0; left: 0;
-#               width: 100%; height: 100%;
-#               background: rgba(0,0,0,0.6);
-#               display: flex; justify-content: center; align-items: center;
-#               z-index: 9999;
-#             }
-#             .rules-modal {
-#               background: #fff;
-#               padding: 30px;
-#               border-radius: 12px;
-#               max-width: 600px;
-#               width: 90%;
-#               box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-#               font-size: 16px; line-height: 1.6;
-#             }
-#             .rules-modal h3 {
-#               text-align: center;
-#               margin-bottom: 15px;
-#               color: #d72638;
-#             }
-#             .rules-modal button {
-#               background-color: #d72638;
-#               color: white;
-#               font-weight: bold;
-#               border: none;
-#               border-radius: 8px;
-#               padding: 10px;
-#               width: 100%;
-#               cursor: pointer;
-#               margin-top: 15px;
-#             }
-#             .rules-modal button:disabled {
-#               background: #aaa;
-#               cursor: not-allowed;
-#             }
-#             </style>
-
-#             <div class="overlay" id="rulesOverlay">
-#               <div class="rules-modal">
-#                 <h3>📋 Exam Rules & Regulations</h3>
-#                 <ul>
-#                   <li>Camera must remain <b>ON</b> during viva.</li>
-#                   <li>Face must remain <b>clearly visible</b>.</li>
-#                   <li>No background noise or external help.</li>
-#                   <li>Answer clearly within the <b>time limit</b>.</li>
-#                   <li>Once you proceed, viva will begin.</li>
-#                 </ul>
-#                 <label>
-#                   <input type="checkbox" id="agreeCheck"> I agree with the rules
-#                 </label>
-#                 <button id="proceedBtn" disabled>Proceed</button>
-#               </div>
-#             </div>
-
-#             <script>
-#             const check = document.getElementById("agreeCheck");
-#             const btn = document.getElementById("proceedBtn");
-
-#             check.addEventListener("change", () => {
-#               btn.disabled = !check.checked;
-#             });
-
-#             btn.addEventListener("click", () => {
-#               // Trigger Streamlit hidden button
-#               window.parent.postMessage({ isRulesAccepted: true, type: "rules-event" }, "*");
-#             });
-#             </script>
-#             """,
-#             height=500,
-#         )
-
-#         # Hidden button → catches JS postMessage
-#         if st.query_params.get("rulesAccepted") == "true":
-#            st.session_state.rules_done = True
-#            try:
-#              st.query_params.clear()
-#            except Exception:
-#              pass
-#            st.rerun()
-
-#     # ✅ After rules accepted
-#     st.success("✅ Rules accepted. You may now begin the viva.")
-
-#     if st.button("Start Test", key="start_btn", type="primary"):
-#         with st.spinner("Playing welcome message..."):
-#             speak("Welcome to this Examination. Please listen carefully and answer within the time limit.")
-#         ensure_camera_started()
-#         st.session_state.interview_started = True
-#         st.rerun()
-
-
-
-
-
 
 # ---------- interview running ----------
-candidate_dir = os.path.join("interviews", st.session_state.candidate_id)
+# candidate_dir = os.path.join("interviews", st.session_state.candidate_id)
+candidate_dir = st.session_state.attempt_dir
+
 os.makedirs(candidate_dir, exist_ok=True)
 
 q_idx = st.session_state.current_q
@@ -407,6 +399,10 @@ if q_idx < len(questions) and not st.session_state.terminate_clicked:
                 "transcript": transcript
             })
 
+
+            score_single_response(st.session_state.candidate_id, question, transcript)
+
+
             st.session_state.is_recording = False
             st.session_state.recording_complete = False
             st.session_state.current_q += 1
@@ -417,44 +413,47 @@ if q_idx < len(questions) and not st.session_state.terminate_clicked:
             st.rerun()
 
 # ---------- termination controls ----------
-if not st.session_state.terminate_clicked:
-    if st.session_state.current_q >= len(questions):
-        st.warning("🎉 You've answered all questions. Click below to view your summary.")
-        if st.button("🟢 View My Responses", key="terminate_btn_final"):
-            st.session_state.terminate_clicked = True
-            st.rerun()
 
-    elif st.session_state.responses:
-        if st.button("🔴 Quit Interview", key="terminate_btn"):
-            st.session_state.terminate_clicked = True
-            st.rerun()
+if not st.session_state.terminate_clicked and st.session_state.current_q >= len(questions):
+    st.success("🎉 You've answered all questions. Please submit to view your results.")
 
+    if st.button("Submit and Show Results", key="terminate_btn_final"):
+        # ✅ mark terminated so camera stops
+        st.session_state.terminate_clicked = True  
 
-# ---------- summary page ----------
-if st.session_state.terminate_clicked:
-    # stop camera
-    cap = st.session_state.get("video_capture")
-    if cap is not None:
-        try: cap.release()
-        except Exception: pass
-        st.session_state.video_capture = None
+        # ✅ stop camera explicitly
+        cap = st.session_state.get("video_capture")
+        if cap is not None:
+            try:
+                cap.release()
+            except Exception:
+                pass
+            st.session_state.video_capture = None
 
-    st.success("✅ Interview Summary")
-    for res in st.session_state.responses:
-        st.markdown(f"**Q{res['question_number']}:** {res['question']}")
-        st.audio(res['audio_file'])
-        st.markdown(f"**A:** {res['transcript']}")
+        # candidate_dir = os.path.join("interviews", st.session_state.candidate_id)
+        candidate_dir = st.session_state.attempt_dir
+        os.makedirs(candidate_dir, exist_ok=True)
 
-    if st.button("Submit and Show Results"):
-        # persist latest responses (overwrite every time)
+        # Save responses
         with open(os.path.join(candidate_dir, "responses.json"), "w") as f:
             json.dump(st.session_state.responses, f, indent=4)
 
-        with st.spinner("Analyzing your responses..."):
-            score_all_responses(st.session_state.candidate_id)
-            generate_analysis_responses(st.session_state.candidate_id)
+        
+
+
+        with st.spinner("Preparing your results..."):
+            candidate_dir = st.session_state.attempt_dir
+            scored_file = os.path.join(candidate_dir, "scored_responses.json")
+            if not os.path.exists(scored_file):
+        # fallback if something went wrong
+               score_all_responses(st.session_state.candidate_id)
+
+
 
         st.switch_page("pages/thank_you.py")
+
+
+
 
 # ---------- keep camera alive between questions WITHOUT hammering reruns ----------
 if st.session_state.interview_started and not st.session_state.terminate_clicked and not st.session_state.is_recording:
@@ -462,26 +461,3 @@ if st.session_state.interview_started and not st.session_state.terminate_clicked
     # mild refresh so preview updates (~2 fps) but UI stays responsive
     time.sleep(0.5)
     st.rerun()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -13,6 +13,9 @@ import evaluatorRoutes from './routes/evaluator.js';
 import detailsRoutes from './routes/details.js';
 import testResultRoutes from './routes/testResults.js';
 
+import platformFeedbackRouter from "./platformFeedback.js";
+
+
 dotenv.config();
 connectDB();
 
@@ -40,6 +43,8 @@ app.use('/api/evaluator', evaluatorRoutes);
 app.use('/api/details', detailsRoutes);
 app.use("/api", testResultRoutes);
 
+// app.use("/api", platformFeedbackRouter);
+app.use("/api/feedback", platformFeedbackRouter);
 
 
 app.listen(5000, () => console.log('Server running on port 5000'));
