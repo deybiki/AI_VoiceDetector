@@ -389,13 +389,19 @@ const TestFormSection = () => {
 
                 {/* File Upload for Excel */}
                 <div className="mb-3">
-                  <label className="form-label">Upload Questions Excel</label>
+                  <label className="form-label">
+                    Upload file containing answers and questions
+                  </label>
                   <input
                     type="file"
-                    accept=".xlsx, .xls .csv"
+                    accept=".xlsx, .xls, .csv"
                     className="form-control"
                     onChange={handleFileChange}
                   />
+                  <small className="form-text text-muted">
+                    Note: Excel file headers should be{" "}
+                    <b>questionText</b> and <b>answerText</b>
+                  </small>
                 </div>
 
                 <div className="mb-3">
@@ -423,6 +429,7 @@ const TestFormSection = () => {
               </form>
             </div>
 
+            {/* === Right Side Section === */}
             <div
               style={{
                 flex: "1 1 35%",
@@ -439,6 +446,33 @@ const TestFormSection = () => {
                 Use this form to assign tests to students with full control over
                 time and questions.
               </p>
+
+              {/* === Sample Excel Image === */}
+              <div style={{ marginTop: "30px" }}>
+                <p className="text-muted mb-2" style={{ fontSize: "0.9rem" }}>
+                  Sample Excel Format(Click to zoom):
+                </p>
+                <img
+                  src="/proj_img/sample2.png"
+                  alt="Sample Excel"
+                  style={{
+                    maxWidth: "200px",
+                    cursor: "pointer",
+                    border: "1px solid #ccc",
+                    borderRadius: "8px",
+                    boxShadow: "0px 2px 6px rgba(0,0,0,0.2)",
+                  }}
+                  onClick={() =>
+                    window.open(
+                      "/proj_img/sample2.png",
+                      "_blank"
+                    )
+                  }
+                />
+                <p className="text-muted" style={{ fontSize: "0.85rem" }}>
+                  (Headers must be <b>questionText</b> and <b>answerText</b>)
+                </p>
+              </div>
             </div>
           </div>
         </div>

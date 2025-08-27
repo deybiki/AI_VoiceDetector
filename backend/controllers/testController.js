@@ -146,6 +146,14 @@ export const addQuestions = async (req, res) => {
       return res.status(400).json({ msg: "Excel file is empty" });
     }
 
+    // ✅ Check if headers are correct
+    const headers = Object.keys(jsonData[0]);
+    if (!headers.includes("questionText") || !headers.includes("answerText")) {
+      return res.status(400).json({
+        msg: "Excel file headers should be 'questionText' and 'answerText'",
+      });
+    }
+
     // Extract and save questions + answers
     const questionDocs = [];
     const answerDocs = [];
@@ -160,7 +168,6 @@ export const addQuestions = async (req, res) => {
 
       const aDoc = await TestAnswer.create({
         testId,
-      //   questionId: qDoc._id,
         answerText: row.answerText,
       });
 
@@ -169,8 +176,8 @@ export const addQuestions = async (req, res) => {
     }
 
     // Push to test model
-    test.questions.push(...questionDocs.map(q => q._id));
-    test.answers.push(...answerDocs.map(a => a._id));
+    test.questions.push(...questionDocs.map((q) => q._id));
+    test.answers.push(...answerDocs.map((a) => a._id));
     await test.save();
 
     res.status(200).json({
@@ -180,9 +187,12 @@ export const addQuestions = async (req, res) => {
     });
   } catch (err) {
     console.error("Add questions error:", err);
-    res.status(500).json({ msg: "Server error while adding questions/answers" });
+    res
+      .status(500)
+      .json({ msg: "Server error while adding questions/answers" });
   }
 };
+
 
 export const removeTest = async (req, res) => {
    try {
