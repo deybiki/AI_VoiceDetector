@@ -312,7 +312,7 @@ export const deleteEvaluator = async (req, res) => {
 export const getVivaResultsByTest = async (req, res) => {
   try {
     const { testId } = req.params;
-    console.log("getVivaResultsByTest", testId);
+   //  console.log("getVivaResultsByTest", testId);
 
     // sirf wahi results jinke _id aur status match kare
     const vivaResults = await VivaResult.find({
@@ -320,6 +320,25 @@ export const getVivaResultsByTest = async (req, res) => {
       status: "Not Evaluated",
     });
 
+    if (!vivaResults || vivaResults.length === 0) {
+      return res.status(404).json({ message: "No viva results found for this test" });
+    }
+
+    res.json(vivaResults);
+  } catch (err) {
+    console.error("❌ Error in getVivaResultsByTest:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getVivaResultsByTestAll = async (req, res) => {
+  try {
+    const { testId } = req.params;
+    console.log("getVivaResultsByTestAll is called", testId);
+
+    // sirf wahi results jinke _id aur status match kare
+    const vivaResults = await VivaResult.find({ _id: testId });
+console.log("getVivaResultsByTestAll is called", vivaResults);
     if (!vivaResults || vivaResults.length === 0) {
       return res.status(404).json({ message: "No viva results found for this test" });
     }
@@ -358,5 +377,47 @@ console.log("submit");
     res.json({ message: "Feedback submitted successfully", evaluatorEntry });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getEvaluatorResponse = async (req, res) => {
+  try {
+    const { testId, candidateId } = req.params;
+    console.log("getEvaluatorResponse is called", candidateId);
+
+    // sirf wahi results jinke _id aur status match kare
+    const evaluatorResponse = await EvaluatorResponse.find({ testId: testId, candidateId: candidateId });
+    console.log("docs received:", evaluatorResponse);
+// console.log("getevaluatorResponseByTestAll is called", evaluatorResponse);
+    if (!evaluatorResponse || evaluatorResponse.length === 0) {
+      console.log("error?");
+      return res.status(404).json({ message: "No evaluator response found" });
+    }
+
+    res.json(evaluatorResponse);
+  } catch (err) {
+    console.error("❌ Error in getevaluatorResponse:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//for students call all viva results
+export const getVivaResultsByTestAllforStud = async (req, res) => {
+  try {
+   console.log("hello");
+    const { candidateId } = req.params;
+    console.log("getVivaResultsByTestAllforStud is called", candidateId);
+
+    // sirf wahi results jinke _id aur status match kare
+    const vivaResults = await VivaResult.find({ candidateId: candidateId });
+// console.log("getVivaResultsByTestAll is called", vivaResults);
+    if (!vivaResults || vivaResults.length === 0) {
+      return res.status(404).json({ message: "No viva results found for this test" });
+    }
+
+    res.json(vivaResults);
+  } catch (err) {
+    console.error("❌ Error in getVivaResultsByTestforStud:", err);
+    res.status(500).json({ error: err.message });
   }
 };

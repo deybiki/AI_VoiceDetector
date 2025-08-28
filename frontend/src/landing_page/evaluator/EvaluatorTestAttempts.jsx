@@ -8,6 +8,7 @@ export default function EvaluatorPage() {
   const [feedback, setFeedback] = useState({});
   const [remarks, setRemarks] = useState({});
   const [submitted, setSubmitted] = useState({}); // ✅ track submissions
+  const [breakdownSizes, setBreakdownSizes] = useState({}); // ✅ store detailedBreakdown size
 
   const { testId } = useParams();
   console.log("testId:", testId);
@@ -18,7 +19,18 @@ export default function EvaluatorPage() {
         .get(`http://localhost:5000/api/evaluator/${testId}/results`)
         .then((res) => {
           console.log("📌 Viva Results:", res.data);
+
+          // ✅ store results
           setResults(res.data);
+
+          // ✅ extract and store breakdown sizes
+          const sizes = {};
+          res.data.forEach((viva) => {
+            sizes[viva.candidateId] = viva.detailedBreakdown
+              ? viva.detailedBreakdown.length
+              : 0;
+          });
+          setBreakdownSizes(sizes);
         })
         .catch((err) => console.error(err));
     }
@@ -32,7 +44,10 @@ export default function EvaluatorPage() {
   const handleSubmit = async (studentId) => {
     try {
       const starValue = feedback[studentId] || 0;
-      const score = starValue * 2; // ⭐ convert stars to marks
+      const breakdownSize = breakdownSizes[studentId] || 1;
+
+      // ⭐ Formula: stars × breakdownSize × 2
+      const score = starValue * breakdownSize * 2;
 
       const payload = {
         testId,
@@ -68,9 +83,12 @@ export default function EvaluatorPage() {
           <div key={viva._id} className="card shadow-sm mb-4">
             <div className="card-body">
               <h5 className="card-title">Student: {viva.candidateId}</h5>
-              {/* <p className="card-text">
-                <b>Total Score:</b> {viva.totalScore}
-              </p> */}
+
+              {/* show breakdown size for reference */}
+              <p className="text-muted">
+                <b>Questions Count:</b>{" "}
+                {viva.detailedBreakdown?.length || 0}
+              </p>
 
               {viva.questionAnswerPairs.map((qa, idx) => (
                 <div key={qa._id} className="mb-2">

@@ -34,6 +34,7 @@ const TestDetails = () => {
   const [evaluators, setEvaluators] = useState([]);
   const [file, setFile] = useState(null);
 
+  const [vivaResults, setVivaResults] = useState([]);
   // Fetch branches (example API)
   const fetchScholarIdsByBranch = async (department) => {
     try {
@@ -265,6 +266,55 @@ const TestDetails = () => {
       toast.error("Failed to remove question");
     }
   };
+
+  // Fetch viva results by testId
+  const fetchVivaResults = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/evaluator/${testId}/results/all`, // <--- route ka space yaha h
+        { withCredentials: true }
+      );
+      setVivaResults(res.data);
+    } catch (err) {
+      toast.error("Failed to fetch viva results");
+    }
+  };
+  useEffect(() => {
+    fetchTest();
+    fetchScholarOptions();
+    fetchVivaResults(); // <-- viva results bhi fetch honge
+  }, [testId]);
+
+  //To fetch evaluator score
+  const EvaluatorScore = ({ testId, candidateId }) => {
+  const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvaluatorScore = async () => {
+      try {
+        // 🔹 API call ka placeholder (route space left for you)
+        const res = await axios.get(
+          `http://localhost:5000/api/evaluator/${testId}/${candidateId}/evaluatorResponse`, 
+          { withCredentials: true }
+        );
+        console.log("score received", res.data[0].score);
+        setScore(res.data[0].score);
+      } catch (err) {
+        console.error("Error fetching evaluator score:", err);
+        setScore("N/A");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvaluatorScore();
+  }, [testId, candidateId]);
+
+  if (loading) return <span>Loading...</span>;
+  return <span className="fw-bold">{score ?? "N/A"}</span>;
+};
+
 
   // Add Question
   const handleAddQuestion = async () => {
@@ -626,6 +676,133 @@ const TestDetails = () => {
             </div>
           </div>
         )}
+        {/* Viva Results Section */}
+        <div className="row">
+          <div className="col-md-12 mb-4">
+            <div
+              className="card h-100 shadow-sm border-0"
+              style={{ borderRadius: "12px", backgroundColor: "#f5f9ff" }}
+            >
+              <div className="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                Viva Results
+                <span className="badge bg-light text-dark">
+                  {vivaResults.length}
+                </span>
+              </div>
+
+              <div className="card-body">
+                {vivaResults.length === 0 ? (
+                  <p className="text-muted">No viva results found.</p>
+                ) : (
+                  <div className="row">
+                    {vivaResults.map((result, idx) => (
+                      <div key={result._id || idx} className="col-md-6 mb-3">
+                        <div
+                          className="card shadow-sm border-0"
+                          style={{ borderRadius: "10px" }}
+                        >
+                          <div className="card-body">
+                            <h5 className="fw-bold text-primary mb-2">
+                              Candidate ID: {result.candidateId}
+                            </h5>
+                            <p className="mb-1">
+                              <strong>Date:</strong>{" "}
+                              {new Date(result.vivaDate).toLocaleString(
+                                "en-IN",
+                                {
+                                  timeZone: "Asia/Kolkata",
+                                }
+                              )}
+                            </p>
+                           {/* Total LLM Score */}
+<p className="mb-2">
+  <strong>Total LLM Score:</strong>{" "}
+  {result.totalScore && result.detailedBreakdown ? (
+    <div
+      style={{
+        display: "inline-block",
+        background: "#f8f9fa",
+        border: "2px solid #007bff",
+        borderRadius: "50%",
+        width: "80px",
+        height: "80px",
+        textAlign: "center",
+        verticalAlign: "middle",
+        lineHeight: "75px",
+        fontWeight: "bold",
+        fontSize: "1.2rem",
+        color: "#007bff",
+        marginRight: "10px",
+      }}
+    >
+      {(Number(result.totalScore) * result.detailedBreakdown.length).toFixed(0)}/
+      {result.detailedBreakdown.length * 10}
+    </div>
+  ) : (
+    "N/A"
+  )}
+  {result.totalScore && result.detailedBreakdown && (
+    <span className="ms-2 text-success fw-semibold">
+      {(
+        ((Number(result.totalScore) * result.detailedBreakdown.length) /
+          (result.detailedBreakdown.length * 10)) *
+        100
+      ).toFixed(1)}
+      %
+    </span>
+  )}
+</p>
+
+
+                            {/* Evaluator Score */}
+<p className="mb-1">
+  <strong>Evaluator Score :</strong>{" "}
+  {result.status === "Not Evaluated" ? (
+    <span className="text-danger">Not yet evaluated</span>
+  ) : (
+    <>
+      <EvaluatorScore
+        testId={testId}
+        candidateId={result.candidateId}
+      />{" "}
+      / <strong>{result.detailedBreakdown?.length * 10}</strong>
+    </>
+  )}
+</p>
+
+
+                            {/* Cosine similarities breakdown */}
+                            {Array.isArray(result.cosineSimilarities) &&
+                              result.cosineSimilarities.length > 0 && (
+                                <div className="mt-2">
+                                  <strong>Cosine Similarities:</strong>
+                                  <ul className="list-group list-group-flush">
+                                    {result.cosineSimilarities.map((val, i) => (
+                                      <li
+                                        key={i}
+                                        className="list-group-item small d-flex justify-content-between"
+                                      >
+                                        <span>Q{i + 1}</span>
+                                        <span>
+                                          {typeof val === "number"
+                                            ? val.toFixed(2)
+                                            : "N/A"}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

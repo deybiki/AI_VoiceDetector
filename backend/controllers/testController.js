@@ -247,3 +247,18 @@ export const removeQuestion = async (req, res) => {
       res.status(500).json({ msg: "Error removing question" });
    }
 };
+
+
+export const findtestfromId = async (req, res) => {
+   try {
+      console.log("findtestfromId is called");
+    const { testId } = req.params;
+    const test = await Test.findById(testId).select("title");
+    if (!test) return res.status(404).json({ message: "Test not found" });
+    res.json({ title: test.title });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
