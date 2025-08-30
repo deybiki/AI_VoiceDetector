@@ -1,6 +1,7 @@
 
 import streamlit as st
-import time, json, os, subprocess, asyncio, tempfile, threading, datetime
+import time, json, os, subprocess, asyncio, tempfile, threading
+from datetime import datetime
 import edge_tts, speech_recognition as sr, sounddevice as sd
 from scipy.io.wavfile import write
 import requests
@@ -84,10 +85,21 @@ db = client.get_database("test")
 tests_collection = db.get_collection("tests")
 query_params = st.query_params
 test_id = str(query_params.get("testId", "")).strip()
+
+st.session_state["test_id"] = test_id
+# print("✅ Final test_id stored in session:", test_id)
+
 student_id = str(query_params.get("studentId", "")).strip()
 if not test_id or not student_id: st.error("❌ Missing IDs"); st.stop()
 test_data = tests_collection.find_one({"sharedLinkId": test_id})
 if not test_data: st.error("❌ Invalid Test ID"); st.stop()
+
+test_description = test_data.get("description", "No description available")
+st.session_state["test_description"] = test_description
+
+# print(f"[DEBUG] Test description fetched: {test_description}")
+
+
 # qids = test_data.get("questions", [])
 # questions = [q.get("questionText","Error") for q in db.get_collection("questions")
 #              .find({"_id": {"$in": [ObjectId(x) for x in qids]}})]
@@ -113,7 +125,7 @@ if not questions:
     st.stop()
 
 st.session_state.reference_answers = reference_answers
-print("✅ Loaded reference answers:", reference_answers)
+# print("✅ Loaded reference answers:", reference_answers)
 
 
 
@@ -132,7 +144,7 @@ if st.session_state.get("candidate_id") != student_id:
     st.session_state.recording_complete = False
 
 
-    attempt_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    attempt_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     st.session_state.attempt_dir = os.path.join(
         "interviews",
         f"{st.session_state.candidate_id}_{attempt_id}"
@@ -220,8 +232,8 @@ def render_timer_box(remaining: int):
 
 
 
-RECORDING_DURATION = 15
-st.title("AI-powered Viva-Voce System")
+RECORDING_DURATION = 25
+st.title("AI-powered Viva-Voice System")
 
 # ---------- confirm ID ----------
 if not st.session_state.id_confirmed:
@@ -267,7 +279,8 @@ if not st.session_state.id_confirmed:
     if st.button("Confirm ID"):
         if cand_in == student_id:
             st.session_state.id_confirmed = True
-            # ✅ Show banner here only once
+
+            # Show banner here only once
             st.success(f"ID '{student_id}' registered successfully.")
             st.rerun()
         else:
@@ -418,10 +431,10 @@ if not st.session_state.terminate_clicked and st.session_state.current_q >= len(
     st.success("🎉 You've answered all questions. Please submit to view your results.")
 
     if st.button("Submit and Show Results", key="terminate_btn_final"):
-        # ✅ mark terminated so camera stops
+        #  mark terminated so camera stops
         st.session_state.terminate_clicked = True  
 
-        # ✅ stop camera explicitly
+        #  stop camera explicitly
         cap = st.session_state.get("video_capture")
         if cap is not None:
             try:
@@ -461,3 +474,33 @@ if st.session_state.interview_started and not st.session_state.terminate_clicked
     # mild refresh so preview updates (~2 fps) but UI stays responsive
     time.sleep(0.5)
     st.rerun()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

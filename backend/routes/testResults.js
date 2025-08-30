@@ -15,6 +15,7 @@ router.post("/submit-viva", async (req, res) => {
   console.log("🔥 Received POST /submit-viva:", req.body); // 🔍 Add this line
 
   const {
+    testId,
     candidateId,
     questionAnswerPairs,
     totalScore,
@@ -26,6 +27,7 @@ router.post("/submit-viva", async (req, res) => {
 
   try {
     const vivaResult = new VivaResult({
+      testId,
       candidateId,
       questionAnswerPairs,
       totalScore,

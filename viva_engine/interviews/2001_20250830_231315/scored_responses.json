@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "a process is program under execution each processor has its own data on food and process communicate with each other using inter process communication process is the smallest instance of a work instance of a program which is managed by the operating system",
+        "gpt_4_score": 4.0,
+        "opus_4_score": 7.0,
+        "llama_3.3_score": 8.0,
+        "average_score": 6.33,
+        "gpt_feedback": "The answer covers some key points but lacks clarity, proper terminology, and complete explanation of a process.",
+        "claude_feedback": "The student's answer provides a good overall understanding of a process, but could be more comprehensive and use more precise terminology.",
+        "llama_feedback": "The answer is mostly accurate and clear, but lacks a bit of structure and completeness in addressing all parts of the question."
+    },
+    {
+        "question": "What is starvation ?",
+        "answer": "starvation is a condition when process with lower priority with for higher priority to complete their execution is least the condition when priority process weight for infinite time till the higher priority process complete his execution for phenomenon is Forest starvation",
+        "gpt_4_score": 4.0,
+        "opus_4_score": 5.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 5.0,
+        "gpt_feedback": "The answer correctly identifies starvation as a process waiting indefinitely due to lower priority, but lacks clarity, proper terminology, and comprehensive explanation.",
+        "claude_feedback": "The answer partially captures the concept of starvation, but lacks clarity and depth in the explanation.",
+        "llama_feedback": "The student's answer demonstrates some understanding of starvation, but lacks clarity and uses incorrect terminology, such as 'Forest starvation' instead of 'priority inversion' or simply 'starvation'."
+    }
+]

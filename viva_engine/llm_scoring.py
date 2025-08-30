@@ -81,6 +81,7 @@ def ask_model(client, model: str, question: str, answer: str) -> Dict:
         prompt = f"""
 Evaluate the student's viva answer (ignore typos).
 
+Context: {st.session_state['test_description']}
 Question: {question}
 Answer: {answer}
 
@@ -116,6 +117,7 @@ def ask_groq_model(client, model: str, question: str, answer: str) -> Dict:
         prompt = f"""
 Evaluate the student's viva answer (ignore typos).
 
+Context: {st.session_state['test_description']}
 Question: {question}
 Answer: {answer}
 

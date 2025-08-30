@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "No audio file.",
+        "gpt_4_score": 2.0,
+        "opus_4_score": 2.0,
+        "llama_3.3_score": 0.0,
+        "average_score": 1.33,
+        "gpt_feedback": "The answer is incomplete and does not define or explain what a process is.",
+        "claude_feedback": "Incomplete answer, no audio file provided.",
+        "llama_feedback": "The student failed to provide any answer, resulting in a complete lack of accuracy, coverage, reasoning, clarity, and correct terminology."
+    },
+    {
+        "question": "What is starvation ?",
+        "answer": "starvation is a condition for high priority process beat for high priority consisting of the resources and processes with lower priority week for the other priority to reach the resources in different time of waiting for the low priority process",
+        "gpt_4_score": 3.0,
+        "opus_4_score": 4.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 4.33,
+        "gpt_feedback": "The answer is partially correct but lacks clarity, proper terminology, and complete explanation of starvation.",
+        "claude_feedback": "The answer partially addresses the concept of starvation, but lacks clarity and coherence in the explanation.",
+        "llama_feedback": "The answer partially addresses the concept of starvation, but lacks clarity and proper terminology, resulting in a somewhat confusing explanation."
+    }
+]
