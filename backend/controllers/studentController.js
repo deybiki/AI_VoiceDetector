@@ -224,6 +224,19 @@ export const getUpcomingTestsForStudent = async (req, res) => {
       return res.status(500).json({ msg: "Server Error" });
    }
 };
+// to find student model _id for corresponding scholarId
+export const fetchStudentId = async (req, res) => {
+   try {
+      console.log("fetchStudentId has been called");
+    const student = await Student.findOne({ scholarId: req.params.scholarId }).select("_id");
+    if (!student) return res.status(404).json({ error: "Student not found" });
+    res.json(student);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 // export {
 //   joinTest,

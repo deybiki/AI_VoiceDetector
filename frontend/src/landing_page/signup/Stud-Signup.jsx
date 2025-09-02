@@ -263,6 +263,30 @@ const Prof_Signup = ({ onClose }) => {
             I agree to the AI Voice Detector <a href="/terms">user agreement</a>
           </label>
         </div> */}
+        <div className="card mt-3">
+  <div className="card-body" style={{ backgroundColor: "#f0f6ff" }}>
+    <div className="form-check">
+      <input 
+        type="checkbox" 
+        id="agree" 
+        required 
+        className="form-check-input"
+      />
+      <label htmlFor="agree" className="form-check-label">
+        <strong>I agree to the following while attempting the test:</strong>
+        <ul className="mt-2 mb-0">
+          <li> Ensure that all facts and details are correct and reliable.</li>
+          <li>Address every part of the topic or requirement thoroughly.</li>
+          <li>Provide logical explanations and justifications that support the statements or conclusions.</li>
+          <li>Present the content in a clear, well-structured, and easy-to-understand manner.</li>
+          <li>Use the correct and appropriate terms relevant to the subject matter.</li>
+          {/* <li>Upload a clear and valid image of your face for identification and verification purposes.</li> */}
+        </ul>
+      </label>
+    </div>
+  </div>
+</div>
+
         <button type="submit" className="submit-btn">
           Create an Account
         </button>

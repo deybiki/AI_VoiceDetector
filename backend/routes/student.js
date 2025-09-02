@@ -79,6 +79,7 @@ import {
    startTest,
    submitTest,
    getUpcomingTestsForStudent,
+   fetchStudentId,
 } from "../controllers/studentController.js";
 import { verifyToken, authorizeRoles } from "../middlewares/authMiddleware.js";
 import { getTestStudents } from "../controllers/examinerController.js";
@@ -125,5 +126,7 @@ router.get("/student/:scholarId", async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 });
+
+router.get("/:scholarId/fetchId", fetchStudentId);
 
 export default router;

@@ -7,6 +7,7 @@ import "./Footer.css";
 const Footer = () => {
   const candidateId = localStorage.getItem("username") || null;
   const studentId = localStorage.getItem("username");
+  // console.log("studentId",studentId);
 
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,29 @@ const Footer = () => {
 
   // { [testId]: "title" }
   const [testTitles, setTestTitles] = useState({});
+  const [startedTests, setStartedTests] = useState({}); // ✅ track started testIds
+  // to find student model id from scholar id
+  const [studentMongoId, setStudentMongoId] = useState(null);
+  
+
+
+  useEffect(() => {
+  const fetchStudentMongoId = async () => {
+    try {
+      if (!studentId) return;
+      console.log(`📡 GET /api/student/by-scholar/${studentId}`);
+      const res = await axios.get(
+        `http://localhost:5000/api/student/${studentId}/fetchId`,
+        { withCredentials: true }
+      );
+      console.log("studentId from model",res.data);
+      setStudentMongoId(res.data?._id);
+    } catch (err) {
+      console.error("❌ student _id fetch error:", err.response?.data || err.message);
+    }
+  };
+  fetchStudentMongoId();
+}, [studentId]);
 
   // ---------------- Fetch Upcoming Tests ----------------
   useEffect(() => {
@@ -41,6 +65,53 @@ const Footer = () => {
     };
     fetchTests();
   }, []);
+// checking test attempts after fetching tests
+  useEffect(() => {
+  const fetchAttempts = async () => {
+    if (!studentMongoId || tests.length === 0) return;
+
+    for (const test of tests) {
+      try {
+        console.log(`📡 GET /api/testattempt/${studentMongoId}/${test._id}`);
+        const res = await axios.get(
+          `http://localhost:5000/api/testAttempt/${studentMongoId}/${test._id}/fetch_test_attempt`,
+          { withCredentials: true }
+        );
+
+        if (res.data) {
+          setStartedTests((prev) => ({
+            ...prev,
+            [test._id]: res.data.status, // status = "started" | "completed"
+          }));
+        }
+      } catch (err) {
+        console.warn(`⚠️ No attempt yet for test ${test._id}`);
+      }
+    }
+  };
+
+  fetchAttempts();
+}, [studentMongoId, tests]);
+
+
+
+  // while starting test submit
+  const handleSubmitTest = async (studentMongoId, testId) => {
+  try {
+    await axios.post(
+      `http://localhost:5000/api/testAttempt/${studentMongoId}/${testId}/submit`,
+      {},
+      { withCredentials: true }
+    );
+
+    setStartedTests((prev) => ({
+      ...prev,
+      [testId]: "attempted",  // ✅ testId ko key banayenge
+    }));
+  } catch (err) {
+    console.error("❌ Error submitting test:", err.response?.data || err.message);
+  }
+};
 
   // ---------------- Fetch Viva Results ----------------
   useEffect(() => {
@@ -111,11 +182,32 @@ const Footer = () => {
       setTestTitles((prev) => ({ ...prev, [sharedLinkId]: "Title not found" }));
     }
   };
+  const handleStartAndSubmit = async (test) => {
+  try {
+    // ✅ pehle startTest call karo
+    
+
+    // ✅ phir submitTest call karo
+    await handleSubmitTest(studentMongoId, test._id);
+    await handleStartTest(test);
+  } catch (err) {
+    console.error("❌ Error in start + submit flow:", err);
+  }
+};
+
 
   // ---------------- Start Test ----------------
   const handleStartTest = async (test) => {
     const testMongoId = test._id;
     const sharedLinkId = test.sharedLinkId;
+     // ✅ Agar test pehle hi start ho chuka hai → ignore
+  if (startedTests[testMongoId]) {
+    console.warn(`⚠️ Test ${testMongoId} already started.`);
+    return;
+  }
+
+  setStartingTestId(testMongoId);
+  setStartedTests((prev) => ({ ...prev, [testMongoId]: true })); // ✅ mark as started
 
     setStartingTestId(testMongoId);
     try {
@@ -214,16 +306,30 @@ const Footer = () => {
 
                   <div className="mt-auto d-flex justify-content-end">
                     <button
-                      className="btn btn-primary shadow-sm"
-                      disabled={
-                        isExpired || isTooEarly || startingTestId === test._id
-                      }
-                      onClick={() => handleStartTest(test)}
-                    >
-                      {startingTestId === test._id
-                        ? "Launching..."
-                        : buttonText}
-                    </button>
+  className="btn btn-primary shadow-sm"
+  disabled={
+    isExpired ||
+    isTooEarly ||
+    startingTestId === test._id ||
+    startedTests[test._id] === "started" ||
+    startedTests[test._id] === "completed" ||
+    startedTests[test._id] === "attempted"
+  }
+  onClick={() => handleStartAndSubmit(test)}
+>
+  {startingTestId === test._id
+    ? "Launching..."
+    : startedTests[test._id] === "started"
+    ? "Already Started"
+    : startedTests[test._id] === "completed"
+    ? "Completed"
+    : startedTests[test._id] === "attempted"
+    ? "Attempted"
+    : buttonText}
+</button>
+
+
+
                   </div>
                 </div>
               </motion.div>

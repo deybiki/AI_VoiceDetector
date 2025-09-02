@@ -12,6 +12,7 @@ import testRoutes from './routes/test.js';
 import evaluatorRoutes from './routes/evaluator.js';
 import detailsRoutes from './routes/details.js';
 import testResultRoutes from './routes/testResults.js';
+import testAttempt from './routes/testAttempt.js';
 
 import platformFeedbackRouter from "./platformFeedback.js";
 
@@ -41,6 +42,7 @@ app.use('/api/examiner', examinerRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api/evaluator', evaluatorRoutes);
 app.use('/api/details', detailsRoutes);
+app.use('/api/testAttempt', testAttempt);
 app.use("/api", testResultRoutes);
 
 // app.use("/api", platformFeedbackRouter);
