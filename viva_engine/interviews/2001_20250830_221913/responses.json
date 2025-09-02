@@ -1,0 +1,14 @@
+[
+    {
+        "question_number": 1,
+        "question": "what is a process?",
+        "audio_file": "interviews\\2001_20250830_221913\\q1_answer.wav",
+        "transcript": "No audio file."
+    },
+    {
+        "question_number": 2,
+        "question": "What is starvation ?",
+        "audio_file": "interviews\\2001_20250830_221913\\q2_answer.wav",
+        "transcript": "starvation is a condition for high priority process beat for high priority consisting of the resources and processes with lower priority week for the other priority to reach the resources in different time of waiting for the low priority process"
+    }
+]

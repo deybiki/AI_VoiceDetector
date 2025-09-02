@@ -10,4 +10,4 @@ scipy
 pymongo
 opencv-python
 Groq
-SentenceTransformer
+Sentence-transformers
