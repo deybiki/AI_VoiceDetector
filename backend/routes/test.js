@@ -11,7 +11,7 @@ router.post("/create", verifyToken, authorizeRoles("examiner"), createTest);
 router.post("/:testId/question", verifyToken, authorizeRoles("examiner"), addQuestion);
 router.post("/:testId/questions", verifyToken, authorizeRoles("examiner"),upload.single("file"), addQuestions);
 router.get("/:testId", verifyToken, authorizeRoles("examiner"), getTest);
-router.get("/:testId/title", findtestfromId);
+router.get("/:sharedLinkId/title", findtestfromId);
 
 
 export default router;

@@ -252,8 +252,9 @@ export const removeQuestion = async (req, res) => {
 export const findtestfromId = async (req, res) => {
    try {
       console.log("findtestfromId is called");
-    const { testId } = req.params;
-    const test = await Test.findById(testId).select("title");
+    const { sharedLinkId } = req.params;
+    const test = await Test.findOne({ sharedLinkId }).select("title");
+   console.log("test received",test);
     if (!test) return res.status(404).json({ message: "Test not found" });
     res.json({ title: test.title });
   } catch (err) {

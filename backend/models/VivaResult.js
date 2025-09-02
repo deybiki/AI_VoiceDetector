@@ -36,6 +36,7 @@
 import mongoose from "mongoose";
 
 const vivaResultSchema = new mongoose.Schema({
+  testId: { type: String, required: true }, 
   candidateId: { type: String, required: true },
   vivaDate: { type: Date, required: true },
   questionAnswerPairs: [

@@ -315,8 +315,17 @@ export const getVivaResultsByTest = async (req, res) => {
    //  console.log("getVivaResultsByTest", testId);
 
     // sirf wahi results jinke _id aur status match kare
+   const test = await Test.findById(testId);
+    if (!test) {
+      return res.status(404).json({ message: "Test not found" });
+    }
+
+    // ✅ sharedLinkId extract karo
+    const { sharedLinkId } = test;
+    console.log("📌 Shared Link ID:", sharedLinkId);
+
     const vivaResults = await VivaResult.find({
-      _id: testId,
+      testId: sharedLinkId,
       status: "Not Evaluated",
     });
 
@@ -333,11 +342,22 @@ export const getVivaResultsByTest = async (req, res) => {
 
 export const getVivaResultsByTestAll = async (req, res) => {
   try {
+   // console.log("hello");
     const { testId } = req.params;
     console.log("getVivaResultsByTestAll is called", testId);
 
+    // ✅ Test model fetch karo
+    const test = await Test.findById(testId);
+    if (!test) {
+      return res.status(404).json({ message: "Test not found" });
+    }
+
+    // ✅ sharedLinkId extract karo
+    const { sharedLinkId } = test;
+    console.log("📌 Shared Link ID:", sharedLinkId);
+
     // sirf wahi results jinke _id aur status match kare
-    const vivaResults = await VivaResult.find({ _id: testId });
+    const vivaResults = await VivaResult.find({ testId: sharedLinkId });
 console.log("getVivaResultsByTestAll is called", vivaResults);
     if (!vivaResults || vivaResults.length === 0) {
       return res.status(404).json({ message: "No viva results found for this test" });
@@ -355,22 +375,33 @@ console.log("getVivaResultsByTestAll is called", vivaResults);
 export const submitFeedback = async (req, res) => {
   try {
    console.log("submit");
+
+   
     const {  candidateId, testId, score, remarks } = req.body;
 
+    const test = await Test.findById(testId);
+    if (!test) {
+      return res.status(404).json({ message: "Test not found" });
+    }
+
+    // ✅ sharedLinkId extract karo
+    const { sharedLinkId } = test;
+    console.log("📌 Shared Link ID:", sharedLinkId);
+   
     const evaluatorEntry = new EvaluatorResponse({
     
       
-      testId,
+      sharedLinkId,
       candidateId,
       score,
       remarks
       
     });
-console.log("submit");
-    await evaluatorEntry.save();console.log("submit");
+console.log("submit1");
+    await evaluatorEntry.save();console.log("submit2");
     // ✅ Step 2: Update VivaResult status
     await VivaResult.findOneAndUpdate(
-      { _id: testId, candidateId: candidateId },
+      { testId: sharedLinkId, candidateId: candidateId },
       { $set: { status: "Evaluated" } },
       { new: true }
     );
@@ -379,14 +410,23 @@ console.log("submit");
     res.status(500).json({ error: error.message });
   }
 };
-
+// to share evaluator scores to prof test details section
 export const getEvaluatorResponse = async (req, res) => {
   try {
     const { testId, candidateId } = req.params;
     console.log("getEvaluatorResponse is called", candidateId);
 
+    const test = await Test.findById(testId);
+    if (!test) {
+      return res.status(404).json({ message: "Test not found" });
+    }
+
+    // ✅ sharedLinkId extract karo
+    const { sharedLinkId } = test;
+    console.log("📌 Shared Link ID:", sharedLinkId);
+
     // sirf wahi results jinke _id aur status match kare
-    const evaluatorResponse = await EvaluatorResponse.find({ testId: testId, candidateId: candidateId });
+    const evaluatorResponse = await EvaluatorResponse.find({ sharedLinkId: sharedLinkId, candidateId: candidateId });
     console.log("docs received:", evaluatorResponse);
 // console.log("getevaluatorResponseByTestAll is called", evaluatorResponse);
     if (!evaluatorResponse || evaluatorResponse.length === 0) {
@@ -408,9 +448,9 @@ export const getVivaResultsByTestAllforStud = async (req, res) => {
     const { candidateId } = req.params;
     console.log("getVivaResultsByTestAllforStud is called", candidateId);
 
-    // sirf wahi results jinke _id aur status match kare
+    
     const vivaResults = await VivaResult.find({ candidateId: candidateId });
-// console.log("getVivaResultsByTestAll is called", vivaResults);
+
     if (!vivaResults || vivaResults.length === 0) {
       return res.status(404).json({ message: "No viva results found for this test" });
     }

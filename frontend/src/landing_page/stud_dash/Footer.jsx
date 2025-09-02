@@ -57,12 +57,20 @@ const Footer = () => {
           `http://localhost:5000/api/evaluator/${candidateId}/studresults`,
           { withCredentials: true }
         );
+        console.log(
+          "listings received from viva for particular schid",
+          res.data
+        );
+        // ✅ sirf wahi results lo jinke pass testId ho
+        const docs = Array.isArray(res.data)
+          ? res.data.filter((d) => d?.testId)
+          : [];
 
-        const docs = Array.isArray(res.data) ? res.data : [];
+        console.log("docs (with only valid testId):", docs);
         setVivaResults(docs);
 
         // 🔑 Each result's `_id` == Test._id → fetch titles
-        const ids = [...new Set(docs.map((d) => d?._id).filter(Boolean))];
+        const ids = [...new Set(docs.map((d) => d?.testId).filter(Boolean))];
         console.log("🧾 testIds from viva:", ids);
 
         ids.forEach((id) => {
@@ -82,25 +90,25 @@ const Footer = () => {
   }, [candidateId]); // run when candidateId available
 
   // ---------------- Fetch Test Title by Test _id ----------------
-  const fetchTestTitle = async (testId) => {
+  const fetchTestTitle = async (sharedLinkId) => {
     try {
-      console.log(`📡 GET /api/test/${testId}/title`);
+      console.log(`📡 GET /api/test/${sharedLinkId}/title`);
       const res = await axios.get(
-        `http://localhost:5000/api/test/${testId}/title`,
+        `http://localhost:5000/api/test/${sharedLinkId}/title`,
         {
           withCredentials: true,
         }
       );
       setTestTitles((prev) => ({
         ...prev,
-        [testId]: res.data?.title || "Untitled Test",
+        [sharedLinkId]: res.data?.title || "Untitled Test",
       }));
     } catch (err) {
       console.error(
-        `❌ title fetch error (${testId}):`,
+        `❌ title fetch error (${sharedLinkId}):`,
         err.response?.data || err.message
       );
-      setTestTitles((prev) => ({ ...prev, [testId]: "Title not found" }));
+      setTestTitles((prev) => ({ ...prev, [sharedLinkId]: "Title not found" }));
     }
   };
 
@@ -244,7 +252,7 @@ const Footer = () => {
             : null;
           const percentage =
             totalScore && maxScore
-              ? ((totalScore / maxScore) * 100).toFixed(1)
+              ? ((Math.round(totalScore * (result?.detailedBreakdown?.length || 1)) / maxScore) * 100).toFixed(1)
               : null;
 
           return (
@@ -258,7 +266,7 @@ const Footer = () => {
                 <div className="card-body text-center">
                   {/* Candidate / Title */}
                   <h5 className="fw-bold text-primary mb-2">
-                    {testTitles[result._id] || "Fetching title..."}
+                    {testTitles[result.testId] || "Fetching title..."}
                   </h5>
 
                   {/* Viva Date */}
@@ -291,7 +299,7 @@ const Footer = () => {
                           marginBottom: "8px",
                         }}
                       >
-                        {totalScore}/{maxScore}
+                        {Math.round(totalScore * (result?.detailedBreakdown?.length || 1))}/{maxScore}
                       </span>
                       <br />
                       <span

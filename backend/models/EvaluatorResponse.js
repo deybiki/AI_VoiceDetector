@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const evaluatorResponseSchema = new mongoose.Schema(
   {
-    testId: {
+    sharedLinkId: {
       type: String,   // ab sirf string store hogi
       required: true,
     },
