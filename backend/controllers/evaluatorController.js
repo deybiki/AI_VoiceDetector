@@ -372,13 +372,14 @@ console.log("getVivaResultsByTestAll is called", vivaResults);
 
 
 // ✅ Submit evaluator feedback
+// ✅ Submit evaluator feedback
 export const submitFeedback = async (req, res) => {
   try {
-   console.log("submit");
+    console.log("submit");
 
-   
-    const {  candidateId, testId, score, remarks } = req.body;
+    const { candidateId, testId, score, remarks, questionwise_details } = req.body;
 
+    // 🔎 Check if test exists
     const test = await Test.findById(testId);
     if (!test) {
       return res.status(404).json({ message: "Test not found" });
@@ -387,29 +388,38 @@ export const submitFeedback = async (req, res) => {
     // ✅ sharedLinkId extract karo
     const { sharedLinkId } = test;
     console.log("📌 Shared Link ID:", sharedLinkId);
-   
+
+    // ✅ New evaluator entry with questionwise details
     const evaluatorEntry = new EvaluatorResponse({
-    
-      
       sharedLinkId,
       candidateId,
       score,
-      remarks
-      
+      questionwise_details,
     });
-console.log("submit1");
-    await evaluatorEntry.save();console.log("submit2");
+
+    // Optional: overall remarks agar rakhna chahte ho to model me ek "overallRemarks" add karna padega
+    if (remarks) {
+      evaluatorEntry.overallRemarks = remarks;
+    }
+
+    console.log("submit1");
+    await evaluatorEntry.save();
+    console.log("submit2");
+
     // ✅ Step 2: Update VivaResult status
     await VivaResult.findOneAndUpdate(
       { testId: sharedLinkId, candidateId: candidateId },
       { $set: { status: "Evaluated" } },
       { new: true }
     );
+
     res.json({ message: "Feedback submitted successfully", evaluatorEntry });
   } catch (error) {
+    console.error("❌ Error in submitFeedback:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 // to share evaluator scores to prof test details section
 export const getEvaluatorResponse = async (req, res) => {
   try {

@@ -5,13 +5,11 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function EvaluatorPage() {
   const [results, setResults] = useState([]);
-  const [feedback, setFeedback] = useState({});
-  const [remarks, setRemarks] = useState({});
-  const [submitted, setSubmitted] = useState({}); // ✅ track submissions
-  const [breakdownSizes, setBreakdownSizes] = useState({}); // ✅ store detailedBreakdown size
+  const [feedback, setFeedback] = useState({}); // { studentId: { qIndex: stars } }
+  const [remarks, setRemarks] = useState({});   // { studentId: { qIndex: text } }
+  const [submitted, setSubmitted] = useState({});
 
   const { testId } = useParams();
-  console.log("testId:", testId);
 
   useEffect(() => {
     if (testId) {
@@ -19,53 +17,59 @@ export default function EvaluatorPage() {
         .get(`http://localhost:5000/api/evaluator/${testId}/results`)
         .then((res) => {
           console.log("📌 Viva Results:", res.data);
-
-          // ✅ store results
           setResults(res.data);
-
-          // ✅ extract and store breakdown sizes
-          const sizes = {};
-          res.data.forEach((viva) => {
-            sizes[viva.candidateId] = viva.detailedBreakdown
-              ? viva.detailedBreakdown.length
-              : 0;
-          });
-          setBreakdownSizes(sizes);
         })
         .catch((err) => console.error(err));
     }
   }, [testId]);
 
   // ⭐ star rating setter
-  const handleStarClick = (studentId, rating) => {
-    setFeedback({ ...feedback, [studentId]: rating });
+  const handleStarClick = (studentId, qIndex, rating) => {
+    setFeedback((prev) => ({
+      ...prev,
+      [studentId]: { ...(prev[studentId] || {}), [qIndex]: rating },
+    }));
   };
 
-  const handleSubmit = async (studentId) => {
+  // Remarks setter
+  const handleRemarkChange = (studentId, qIndex, value) => {
+    setRemarks((prev) => ({
+      ...prev,
+      [studentId]: { ...(prev[studentId] || {}), [qIndex]: value },
+    }));
+  };
+
+  const handleSubmit = async (studentId, questions) => {
     try {
-      const starValue = feedback[studentId] || 0;
-      const breakdownSize = breakdownSizes[studentId] || 1;
+      // Build questionwise_details
+      const questionwise_details = questions.map((qa, idx) => ({
+        question_score: (feedback[studentId]?.[idx] || 0) * 2, // ⭐ example: stars ×2
+        remarks: remarks[studentId]?.[idx] || "",
+      }));
 
-      // ⭐ Formula: stars × breakdownSize × 2
-      const score = starValue * breakdownSize * 2;
-
-      const payload = {
-        testId,
-        candidateId: studentId,
-        score,
-        remarks: remarks[studentId] || "",
-      };
-
-      console.log("📤 Payload being sent:", payload);
-
-      await axios.post(
-        `http://localhost:5000/api/evaluator/resultsubmit`,
-        payload
+      // Compute total score
+      const score = questionwise_details.reduce(
+        (sum, q) => sum + q.question_score,
+        0
       );
 
-      alert("Feedback submitted!");
+      const payload = {
+  testId,
+  candidateId: studentId,
+  score, // cumulative score (sum of all question scores ya jo formula chahiye)
+  remarks: "Overall remarks here (optional)", // agar chahiye toh
+  questionwise_details, // array of { question_score, remarks }
+};
 
-      // ✅ mark this student as submitted
+console.log("📤 Payload being sent:", payload);
+
+await axios.post(
+  `http://localhost:5000/api/evaluator/resultsubmit`,
+  payload
+);
+
+
+      alert("Feedback submitted!");
       setSubmitted((prev) => ({ ...prev, [studentId]: true }));
     } catch (error) {
       console.error("❌ Error submitting feedback:", error);
@@ -84,70 +88,59 @@ export default function EvaluatorPage() {
             <div className="card-body">
               <h5 className="card-title">Student: {viva.candidateId}</h5>
 
-              {/* show breakdown size for reference */}
-              <p className="text-muted">
-                <b>Questions Count:</b>{" "}
-                {viva.detailedBreakdown?.length || 0}
-              </p>
-
               {viva.questionAnswerPairs.map((qa, idx) => (
-                <div key={qa._id} className="mb-2">
+                <div key={qa._id} className="mb-3 border-bottom pb-2">
                   <p className="mb-1">
                     <b>Q{idx + 1}:</b> {qa.question}
                   </p>
                   <p className="text-muted">
                     <b>Answer:</b> {qa.answer}
                   </p>
+
+                  {/* ⭐ Star Rating per question */}
+                  <div className="mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() =>
+                          handleStarClick(viva.candidateId, idx, star)
+                        }
+                        style={{
+                          fontSize: "1.5rem",
+                          cursor: "pointer",
+                          color:
+                            star <= (feedback[viva.candidateId]?.[idx] || 0)
+                              ? "gold"
+                              : "lightgray",
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Remarks per question */}
+                  <textarea
+                    className="form-control"
+                    placeholder="Write remarks..."
+                    value={remarks[viva.candidateId]?.[idx] || ""}
+                    onChange={(e) =>
+                      handleRemarkChange(viva.candidateId, idx, e.target.value)
+                    }
+                    disabled={submitted[viva.candidateId]}
+                  />
                 </div>
               ))}
-
-              {/* ⭐ Star Rating */}
-              <div className="mb-3">
-                <label className="form-label fw-bold">Feedback (Stars):</label>
-                <div>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      onClick={() => handleStarClick(viva.candidateId, star)}
-                      style={{
-                        fontSize: "1.5rem",
-                        cursor: "pointer",
-                        color:
-                          star <= (feedback[viva.candidateId] || 0)
-                            ? "gold"
-                            : "lightgray",
-                      }}
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Remarks textarea */}
-              <div className="mb-3">
-                <label className="form-label fw-bold">Remarks</label>
-                <textarea
-                  className="form-control"
-                  placeholder="Write remarks..."
-                  value={remarks[viva.candidateId] || ""}
-                  onChange={(e) =>
-                    setRemarks({
-                      ...remarks,
-                      [viva.candidateId]: e.target.value,
-                    })
-                  }
-                  disabled={submitted[viva.candidateId]} // ✅ disable if submitted
-                />
-              </div>
 
               {/* ✅ Submit or Finished */}
               {submitted[viva.candidateId] ? (
                 <span className="badge bg-success p-2">✅ Finished</span>
               ) : (
                 <button
-                  className="btn btn-primary"
-                  onClick={() => handleSubmit(viva.candidateId)}
+                  className="btn btn-primary mt-3"
+                  onClick={() =>
+                    handleSubmit(viva.candidateId, viva.questionAnswerPairs)
+                  }
                 >
                   Submit Feedback
                 </button>

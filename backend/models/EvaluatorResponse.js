@@ -3,22 +3,41 @@ import mongoose from "mongoose";
 const evaluatorResponseSchema = new mongoose.Schema(
   {
     sharedLinkId: {
-      type: String,   // ab sirf string store hogi
+      type: String,
       required: true,
     },
     candidateId: {
-      type: String,   // ab sirf string store hoga
+      type: String,
       required: true,
     },
+
+    // ✅ Cumulative test score
     score: {
-      type: Number,   // integer score
+      type: Number,
       required: true,
     },
-    remarks: {
-      type: String,   // textual feedback
-      required: true,
-      trim: true,
-    },
+
+    // ✅ Cumulative test remarks
+    // remarks: {
+    //   type: String,
+    //   required: true,
+    //   trim: true,
+    // },
+
+    // ✅ Question-wise details
+    questionwise_details: [
+      {
+        question_score: {
+          type: Number,
+          required: true,
+        },
+        remarks: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
