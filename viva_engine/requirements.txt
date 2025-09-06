@@ -11,3 +11,4 @@ pymongo
 opencv-python
 Groq
 Sentence-transformers
+mutagen

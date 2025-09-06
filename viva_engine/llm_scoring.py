@@ -234,8 +234,8 @@ def safe_deepmind_score(q, a):
 def safe_llama_score(q, a):
     try:
         # Try primary Llama
-        raise Exception("Simulated failure for testing fallback")
-        # return ask_groq_model(client_llama, "llama-3.3-70b-versatile", q, a)
+        # raise Exception("Simulated failure for testing fallback")
+         return ask_groq_model(client_llama, "llama-3.3-70b-versatile", q, a)
     except Exception as e:
         print(f"[Llama Fallback Triggered] Primary failed: {e}")
         try:
