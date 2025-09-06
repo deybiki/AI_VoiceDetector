@@ -15,7 +15,7 @@ import testResultRoutes from './routes/testResults.js';
 import testAttempt from './routes/testAttempt.js';
 
 import platformFeedbackRouter from "./platformFeedback.js";
-import violationRoutes from "./routes/violation.js";
+// import violationRoutes from "./routes/violation.js";
 
 
 dotenv.config();
@@ -56,7 +56,7 @@ app.use("/api", testResultRoutes);
 
 // app.use("/api", platformFeedbackRouter);
 app.use("/api/feedback", platformFeedbackRouter);
-app.use("/api", violationRoutes);
+// app.use("/api", violationRoutes);
 
 
 app.listen(5000, () => console.log('Server running on port 5000'));
