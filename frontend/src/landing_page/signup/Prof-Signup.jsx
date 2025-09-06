@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion } from "framer-motion"; // ✅ Import Framer Motion
+import { motion } from "framer-motion";
 import "./Prof-Signup.css";
 
 const Prof_Signup = ({ onClose }) => {
@@ -13,10 +13,11 @@ const Prof_Signup = ({ onClose }) => {
     email: "",
     password: "",
     username: "",
-    department: ""
+    department: "",
+    adminPassword: "" // ✅ New field
   });
 
-  const { name, email, password, username, department } = inputValue;
+  const { name, email, password, username, department, adminPassword } = inputValue;
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +39,13 @@ const Prof_Signup = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Check admin password before API call
+    if (adminPassword !== "1507") {
+      handleError("Admin password incorrect!");
+      return;
+    }
+
     try {
       const payload = {
         name,
@@ -57,7 +65,7 @@ const Prof_Signup = ({ onClose }) => {
       handleSuccess(data.msg);
       setTimeout(() => {
         const profName = username.replace(/\s+/g, '-').toLowerCase();
-        navigate(`/prof-dash/${profName}`);
+        navigate("/");
       }, 1000);
     } catch (error) {
       console.error("SIGNUP ERROR:", error);
@@ -73,7 +81,8 @@ const Prof_Signup = ({ onClose }) => {
       email: "",
       password: "",
       username: "",
-      department: ""
+      department: "",
+      adminPassword: ""
     });
   };
 
@@ -141,12 +150,20 @@ const Prof_Signup = ({ onClose }) => {
             required
           />
         </div>
-        {/* <div className="form-check"> */}
-          {/* <input type="checkbox" id="agree" required /> */}
-          {/* <label htmlFor="agree">
-            I agree to the AI Voice Detector <a href="/terms">user agreement</a>
-          </label> */}
-        {/* </div> */}
+
+        {/* ✅ Admin Password Field */}
+        <div className="form-group">
+          <label>Admin Password:</label>
+          <input
+            type="password"
+            name="adminPassword"
+            value={adminPassword}
+            onChange={handleOnChange}
+            placeholder="Enter Admin Password"
+            required
+          />
+        </div>
+
         <button type="submit" className="submit-btn">
           Create an Account
         </button>
