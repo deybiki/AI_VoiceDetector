@@ -15,6 +15,7 @@ import testResultRoutes from './routes/testResults.js';
 import testAttempt from './routes/testAttempt.js';
 
 import platformFeedbackRouter from "./platformFeedback.js";
+import violationRoutes from "./routes/violation.js";
 
 
 dotenv.config();
@@ -22,10 +23,18 @@ connectDB();
 
 const app = express();
 
+// app.use(cors({
+//    origin: "http://localhost:3000",
+//    credentials: true
+// }));
+
+
 app.use(cors({
-   origin: "http://localhost:3000",
+   origin: ["http://localhost:3000", "http://localhost:8501"],
    credentials: true
 }));
+
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,6 +56,7 @@ app.use("/api", testResultRoutes);
 
 // app.use("/api", platformFeedbackRouter);
 app.use("/api/feedback", platformFeedbackRouter);
+app.use("/api", violationRoutes);
 
 
 app.listen(5000, () => console.log('Server running on port 5000'));

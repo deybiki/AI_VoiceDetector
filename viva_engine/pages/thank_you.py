@@ -11,7 +11,7 @@ from datetime import datetime
 import requests
 from sentence_transformers import SentenceTransformer, util
 import threading
-
+from full_screen import stop_tab_monitor
 
 
 # model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -209,12 +209,20 @@ elif st.session_state.view == 'feedback':
         st.rerun()
 
 # --- VIEW 3: FINAL THANK YOU ---
+# elif st.session_state.view == 'final_thank_you':
+#     st.success("**Thank you for completing the viva and providing your valuable feedback!**")
+#     st.balloons()
+#     st.session_state.clear()
+#     st.stop()
+
 elif st.session_state.view == 'final_thank_you':
+    # exit fullscreen cleanly
+    stop_tab_monitor()
+
     st.success("**Thank you for completing the viva and providing your valuable feedback!**")
     st.balloons()
     st.session_state.clear()
     st.stop()
-
 
 
 

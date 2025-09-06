@@ -13,8 +13,9 @@ import streamlit.components.v1 as components
 # from streamlit_autorefresh import st_autorefresh
 
 # --- COMPONENT IMPORTS ---
-from face_monitor import render_face_monitor, ensure_camera_started
+from face_monitor import render_face_monitor, ensure_camera_started,camera_check_ui
 from llm_scoring import score_all_responses ,score_single_response
+from full_screen import start_tab_monitor
 
 st.set_page_config(page_title="AI Viva System", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""<style>[data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}</style>""", unsafe_allow_html=True)
@@ -154,7 +155,7 @@ if st.session_state.get("candidate_id") != student_id:
 def show_countdown(message, secs=3):
     ph = st.empty()
     for remaining in range(secs, 0, -1):
-        render_face_monitor()
+        # render_face_monitor()
         ph.markdown(
             f"""
             <div style="
@@ -244,14 +245,14 @@ if not st.session_state.id_confirmed:
     except Exception:
         pass
 
-    cand_in = st.text_input("Enter your Candidate ID to begin:", value=student_id)
-    if st.button("Confirm ID"):
-        if cand_in == student_id:
-            st.session_state.id_confirmed = True
-            st.rerun()
-        else:
-            st.error("❌ Entered ID does not match.")
-    st.stop()
+    # cand_in = st.text_input("Enter your Candidate ID to begin:", value=student_id)
+    # if st.button("Confirm ID"):
+    #     if cand_in == student_id:
+    #         st.session_state.id_confirmed = True
+    #         st.rerun()
+    #     else:
+    #         st.error("❌ Entered ID does not match.")
+    # st.stop()
 
 # ---------- start interview: welcome is BLOCKING, then start camera ----------
 
@@ -261,7 +262,7 @@ if not st.session_state.id_confirmed:
 
 # ---------- rules popup (before showing Start button) ----------
 
-# import streamlit as st
+
 
 if "rules_accepted" not in st.session_state:
     st.session_state.rules_accepted = False
@@ -269,6 +270,8 @@ if "interview_started" not in st.session_state:
     st.session_state.interview_started = False
 
 # -------------------
+if "camera_checked" not in st.session_state:
+    st.session_state.camera_checked = False
 
 
 
@@ -327,19 +330,89 @@ if not st.session_state.rules_accepted:
         st.rerun()
     st.stop()
 
+# ---------- Camera Check Page ----------
+if st.session_state.rules_accepted and not st.session_state.camera_checked:
+    st.header("Camera Check")
+    st.markdown("Please adjust your camera so that only your face is visible.")
+
+    ensure_camera_started()
+    ready = camera_check_ui()
+
+    if ready:
+        st.session_state.camera_checked = True
+        st.rerun()
+    st.stop()
+
+
+
+
 # ---------- Start Test Page ----------
-if not st.session_state.interview_started:
+
+
+if st.session_state.camera_checked and not st.session_state.interview_started: 
+# if not st.session_state.interview_started:
     st.success(" Click Start Test to begin the viva.")
 
     if st.button("Start Test", key="start_test_btn"):
         with st.spinner("Playing welcome message..."):
             speak("Welcome to this Examination. Please listen carefully and answer within the time limit.")
         ensure_camera_started()
+        
         st.session_state.interview_started = True
+        # start_tab_monitor(test_id, student_id, backend_url="http://localhost:5000/api")
+        start_tab_monitor(
+        test_id=st.session_state["test_id"],
+        student_id=st.session_state["candidate_id"],
+        backend_url="http://localhost:5000/api"
+)
+
+    
+    
+
         st.rerun()
     st.stop()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# candidate_dir = st.session_state.attempt_dir
+# init_fullscreen_monitor(candidate_dir)
 
 
 
@@ -359,7 +432,12 @@ if q_idx < len(questions) and not st.session_state.terminate_clicked:
 
 
     # show monitor every render (no forced rerun here)
-    render_face_monitor()
+    # render_face_monitor()
+    # render_face_monitor(throttle_secs=10, save_dir=candidate_dir)
+    render_face_monitor(save_dir=candidate_dir, randomized=True)
+    # render_face_monitor(save_dir="logs", randomized=True, show_alerts=False)
+
+
 
     if not st.session_state.is_recording:
         q_key = f"auto_started_q{q_idx}"
@@ -470,7 +548,10 @@ if not st.session_state.terminate_clicked and st.session_state.current_q >= len(
 
 # ---------- keep camera alive between questions WITHOUT hammering reruns ----------
 if st.session_state.interview_started and not st.session_state.terminate_clicked and not st.session_state.is_recording:
-    render_face_monitor()
+    # render_face_monitor()
+    render_face_monitor(save_dir=candidate_dir, randomized=True)
+    # render_face_monitor(save_dir="logs", randomized=True, show_alerts=False)
+
     # mild refresh so preview updates (~2 fps) but UI stays responsive
     time.sleep(0.5)
     st.rerun()
