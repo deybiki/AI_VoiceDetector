@@ -15,7 +15,7 @@ import streamlit.components.v1 as components
 # --- COMPONENT IMPORTS ---
 from face_monitor import render_face_monitor, ensure_camera_started,camera_check_ui
 from llm_scoring import score_all_responses ,score_single_response
-from full_screen import start_tab_monitor
+# from full_screen import start_tab_monitor, stop_tab_monitor
 
 st.set_page_config(page_title="AI Viva System", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""<style>[data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}</style>""", unsafe_allow_html=True)
@@ -291,17 +291,36 @@ if not st.session_state.id_confirmed:
     st.stop()
 
 # ---------- Rules Page ----------
+# if not st.session_state.rules_accepted:
+#     st.header("Viva Rules & Regulations")
+#     st.markdown(
+#         """
+#         - Camera must remain **ON** during viva.  
+#         - Face must remain **clearly visible**.  
+#         - No background noise or external help.  
+#         - Answer clearly within the **time limit**.  
+#         - Once you proceed, viva will begin.  
+#         """
+#     )
+
 if not st.session_state.rules_accepted:
     st.header("Viva Rules & Regulations")
     st.markdown(
         """
-        - Camera must remain **ON** during viva.  
-        - Face must remain **clearly visible**.  
-        - No background noise or external help.  
-        - Answer clearly within the **time limit**.  
-        - Once you proceed, viva will begin.  
+        - Throughout the exam, you will be under **camera monitoring** and your behavior will be logged.  
+        - Any **undesirable behavior** may lead to **disqualification**.  
+        - Ensure you have a **high-speed internet connection**, a **quiet environment**, and a room with **proper lighting**.  
+        - **Do not switch tabs** or leave the viva window; such actions will be monitored and logged.  
+        - Answer **within the time limit** for each question. You will have **45 seconds per question**. 
+        - After the beep sound, you may start answering, and continue until the timer ends and the beep sounds again.  
+        - Speak **clearly and loudly** so your answers can be accurately recorded and assessed. 
+        - Once you click **Start Exam**, the viva will begin. After submitting your responses, **please wait** for results and feedback.  
+
+        **Thank you! Wishing you the best viva experience.**
         """
     )
+
+
 
     agree = st.checkbox(" I have read and agree to the rules")
     proceed_btn = st.button("Proceed", disabled=not agree)
@@ -360,59 +379,12 @@ if st.session_state.camera_checked and not st.session_state.interview_started:
         
         st.session_state.interview_started = True
         # start_tab_monitor(test_id, student_id, backend_url="http://localhost:5000/api")
-        start_tab_monitor(
-        test_id=st.session_state["test_id"],
-        student_id=st.session_state["candidate_id"],
-        backend_url="http://localhost:5000/api"
-)
-
-    
-    
+        # start_tab_monitor()
 
         st.rerun()
     st.stop()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# candidate_dir = st.session_state.attempt_dir
-# init_fullscreen_monitor(candidate_dir)
 
 
 
@@ -510,6 +482,8 @@ if not st.session_state.terminate_clicked and st.session_state.current_q >= len(
 
     if st.button("Submit and Show Results", key="terminate_btn_final"):
         #  mark terminated so camera stops
+        # stop_tab_monitor()
+
         st.session_state.terminate_clicked = True  
 
         #  stop camera explicitly

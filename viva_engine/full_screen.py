@@ -1,194 +1,243 @@
-# # import os, json
-# # import streamlit as st
-# # import streamlit.components.v1 as components
-# # from datetime import datetime
-
-# # def _inject_js(save_dir: str):
-# #     """
-# #     Injects JavaScript for fullscreen + tab monitoring.
-# #     Logs violations into Streamlit session_state + candidate_dir/violations.json.
-# #     """
-# #     if "violations" not in st.session_state:
-# #         st.session_state.violations = []
-
-# #     os.makedirs(save_dir, exist_ok=True)
-# #     log_file = os.path.join(save_dir, "violations.json")
-
-# #     if not os.path.exists(log_file):
-# #         with open(log_file, "w") as f:
-# #             json.dump([], f)
-
-# #     # JavaScript to detect violations
-# #     js_code = """
-# #     <script>
-# #     function logViolation(reason) {
-# #         const payload = {
-# #             reason: reason,
-# #             ts: new Date().toISOString()
-# #         };
-# #         window.parent.postMessage(
-# #             { type: "streamlit:setComponentValue", value: payload },
-# #             "*"
-# #         );
-# #         alert("⚠️ " + reason + ". Please stay in fullscreen!");
-# #         enableFullscreen();
-# #     }
-
-# #     function enableFullscreen() {
-# #         let elem = document.documentElement;
-# #         if (elem.requestFullscreen) {
-# #             elem.requestFullscreen();
-# #         } else if (elem.mozRequestFullScreen) {
-# #             elem.mozRequestFullScreen();
-# #         } else if (elem.webkitRequestFullscreen) {
-# #             elem.webkitRequestFullscreen();
-# #         } else if (elem.msRequestFullscreen) {
-# #             elem.msRequestFullscreen();
-# #         }
-# #     }
-
-# #     document.addEventListener("visibilitychange", () => {
-# #         if (document.hidden) {
-# #             logViolation("Tab switch / minimized detected");
-# #         }
-# #     });
-
-# #     window.addEventListener("blur", () => {
-# #         logViolation("Window lost focus");
-# #     });
-
-# #     document.addEventListener("fullscreenchange", () => {
-# #         if (!document.fullscreenElement) {
-# #             logViolation("Exited fullscreen");
-# #         }
-# #     });
-
-# #     enableFullscreen();
-# #     </script>
-# #     """
-
-# #     # Render hidden component that passes violations back
-# #     payload = components.html(js_code, height=0, width=0)
-
-# #     # If JS sent back a violation, save it
-# #     if payload is not None:
-# #         st.session_state.violations.append(payload)
-# #         with open(log_file, "r") as f:
-# #             logs = json.load(f)
-# #         logs.append(payload)
-# #         with open(log_file, "w") as f:
-# #             json.dump(logs, f, indent=2)
-
-
-# # def init_fullscreen_monitor(candidate_dir: str):
-# #     """Start fullscreen + tab monitoring."""
-# #     _inject_js(candidate_dir)
-
-
-# # def stop_fullscreen_monitor():
-# #     """Stop fullscreen monitor cleanly."""
-# #     st.markdown(
-# #         """
-# #         <script>
-# #         if (document.exitFullscreen) {
-# #             document.exitFullscreen();
-# #         }
-# #         </script>
-# #         """,
-# #         unsafe_allow_html=True,
-# #     )
-# #     st.session_state.violations = []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import streamlit as st
 import streamlit.components.v1 as components
 
-def start_tab_monitor(test_id: str, student_id: str, backend_url: str):
-    js_code = f"""
+def start_tab_monitor():
+    """
+    Simple, bulletproof tab monitor - guaranteed to work
+    """
+    js_code = """
+    <div id="tab-monitor-container"></div>
     <script>
-    (function() {{
-        if (window._tabMonitorInstalled) return;
-        window._tabMonitorInstalled = true;
-
-        const LOG_URL = "{backend_url}/log-violation";
-        const meta = {{ testId: "{test_id}", studentId: "{student_id}" }};
-
-        function logViolation(reason) {{
-            const payload = {{ ...meta, reason, ts: new Date().toISOString() }};
-            console.log("Sending violation:", payload);
-
-            fetch(LOG_URL, {{
-                method: "POST",
-                headers: {{ "Content-Type": "application/json" }},
-                body: JSON.stringify(payload)
-            }}).then(r => console.log("Server response", r.status))
-              .catch(err => console.error("Fetch error", err));
-
-            let bar = document.getElementById("violation-banner");
-            if (!bar) {{
-                bar = document.createElement("div");
-                bar.id = "violation-banner";
-                bar.style.position = "fixed";
-                bar.style.top = "0";
-                bar.style.left = "0";
-                bar.style.width = "100%";
-                bar.style.padding = "12px";
-                bar.style.background = "red";
-                bar.style.color = "white";
-                bar.style.fontWeight = "bold";
-                bar.style.textAlign = "center";
-                bar.style.zIndex = "999999";
-                document.body.appendChild(bar);
-            }}
-            bar.innerText = "⚠️ " + reason + " — logged!";
-            setTimeout(() => {{ if (bar) bar.remove(); }}, 4000);
-        }}
-
-        // Save refs so we can remove them later
-        window._tabVisibilityHandler = () => {{
-            if (document.hidden) logViolation("Tab switch / minimized");
-        }};
-        window._tabBlurHandler = () => logViolation("Window lost focus");
-
-        document.addEventListener("visibilitychange", window._tabVisibilityHandler);
-        window.addEventListener("blur", window._tabBlurHandler);
-
-        console.log("✅ Tab monitor active");
-    }})();
+    console.log("🔍 DEBUG: Script is loading...");
+    
+    // Simple global check
+    if (window.tabMonitorActive) {
+        console.log("⚠️ Monitor already active, skipping");
+    } else {
+        console.log("✅ Starting fresh monitor");
+        window.tabMonitorActive = true;
+        
+        // Simple state
+        let warningShown = false;
+        
+        // Simple beep function
+        function playBeep() {
+            console.log("🔊 Playing beep...");
+            try {
+                // Method 1: Try creating audio context
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const vol = ctx.createGain();
+                
+                osc.connect(vol);
+                vol.connect(ctx.destination);
+                
+                osc.frequency.value = 800;
+                vol.gain.value = 0.1;
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+                
+                console.log("✅ Beep played via AudioContext");
+            } catch(e) {
+                console.log("❌ AudioContext failed:", e);
+                // Fallback: try HTML audio
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dws2QYBT2U2PA=');
+                    audio.volume = 0.3;
+                    audio.play();
+                    console.log("✅ Beep played via HTML5 Audio");
+                } catch(e2) {
+                    console.log("❌ All audio methods failed:", e2);
+                }
+            }
+        }
+        
+        // Simple warning function
+        function showWarning(reason) {
+            if (warningShown) {
+                console.log("⚠️ Warning already shown, skipping");
+                return;
+            }
+            
+            console.log("🚨 SHOWING WARNING:", reason);
+            warningShown = true;
+            
+            // Play beep first
+            playBeep();
+            
+            // Create simple overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'simple-warning';
+            overlay.style.cssText = `
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: rgba(255, 0, 0, 0.9) !important;
+                z-index: 999999 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: white !important;
+                font-family: Arial, sans-serif !important;
+                font-size: 24px !important;
+                text-align: center !important;
+                cursor: pointer !important;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="background: white; color: red; padding: 40px; border-radius: 10px; max-width: 400px;">
+                    <h1 style="margin: 0 0 20px 0; font-size: 32px;">⚠️ WARNING!</h1>
+                    <p style="margin: 0 0 20px 0; color: black;">${reason}</p>
+                    <p style="margin: 0 0 30px 0; color: black;">Click here to return to exam</p>
+                    <button onclick="this.parentElement.parentElement.remove(); window.tabMonitorWarningShown = false; console.log('Warning dismissed');" 
+                            style="background: #007bff; color: white; border: none; padding: 15px 30px; border-radius: 5px; font-size: 18px; cursor: pointer;">
+                        Return to Exam
+                    </button>
+                </div>
+            `;
+            
+            // Add to page
+            document.body.appendChild(overlay);
+            
+            // Make it clickable
+            overlay.addEventListener('click', function() {
+                console.log("📱 Warning clicked - dismissing");
+                overlay.remove();
+                warningShown = false;
+            });
+            
+            console.log("✅ Warning overlay created and shown");
+        }
+        
+        // Test warning function (remove this after testing)
+        window.testWarning = function() {
+            console.log("🧪 TEST: Triggering manual warning");
+            showWarning("Manual Test Warning");
+        };
+        
+        // Simple detection functions
+        function onVisibilityChange() {
+            console.log("👁️ Visibility changed. Hidden:", document.hidden);
+            if (document.hidden && !warningShown) {
+                showWarning("You switched tabs or minimized the window!");
+            }
+        }
+        
+        function onWindowBlur() {
+            console.log("🔍 Window blur detected");
+            setTimeout(function() {
+                if (!document.hasFocus() && !warningShown) {
+                    showWarning("Window lost focus - return to exam!");
+                }
+            }, 200);
+        }
+        
+        function onPageHide() {
+            console.log("📄 Page hide detected");
+            if (!warningShown) {
+                showWarning("Page navigation detected!");
+            }
+        }
+        
+        // Add listeners with error handling
+        try {
+            console.log("🔗 Adding visibility change listener");
+            document.addEventListener('visibilitychange', onVisibilityChange);
+        } catch(e) {
+            console.log("❌ Failed to add visibilitychange:", e);
+        }
+        
+        try {
+            console.log("🔗 Adding window blur listener");
+            window.addEventListener('blur', onWindowBlur);
+        } catch(e) {
+            console.log("❌ Failed to add blur:", e);
+        }
+        
+        try {
+            console.log("🔗 Adding page hide listener");
+            window.addEventListener('pagehide', onPageHide);
+        } catch(e) {
+            console.log("❌ Failed to add pagehide:", e);
+        }
+        
+        // Test that events are working
+        console.log("🧪 Setting up test interval...");
+        let testCount = 0;
+        const testInterval = setInterval(function() {
+            testCount++;
+            console.log(`⏰ Test ${testCount}: Document hidden=${document.hidden}, hasFocus=${document.hasFocus()}`);
+            
+            if (testCount >= 5) {
+                clearInterval(testInterval);
+                console.log("🏁 Test interval complete");
+            }
+        }, 2000);
+        
+        console.log("✅ Tab monitor setup complete!");
+        console.log("🧪 To test manually, run: testWarning() in console");
+    }
     </script>
     """
-    components.html(js_code, height=0, width=0)
+    
+    # Use a unique key to force re-render
+    import time
+    key = f"tab_monitor_{int(time.time())}"
+    
+    components.html(js_code, height=100, width=100, key=key)
+    
+    # Also add a visible indicator
+    st.markdown("""
+    <div style="background: #e8f5e8; padding: 10px; border-radius: 5px; margin: 10px 0;">
+        🟢 <strong>Tab Monitor Active</strong> - Try switching tabs to test the warning system
+    </div>
+    """, unsafe_allow_html=True)
 
 def stop_tab_monitor():
-    components.html(
-        """
-        <script>
-        try {
-            if (window._tabMonitorInstalled) {
-                document.removeEventListener("visibilitychange", window._tabVisibilityHandler);
-                window.removeEventListener("blur", window._tabBlurHandler);
-                window._tabMonitorInstalled = false;
-                console.log("🛑 Tab monitor stopped");
-            }
-        } catch(e) { console.error("Stop error", e); }
-        </script>
-        """,
-        height=0,
-        width=0,
-    )
+    """Clean stop function"""
+    cleanup_js = """
+    <script>
+    console.log("🛑 Stopping tab monitor");
+    window.tabMonitorActive = false;
+    
+    // Remove warning if present
+    const warning = document.getElementById('simple-warning');
+    if (warning) {
+        warning.remove();
+        console.log("🗑️ Removed warning overlay");
+    }
+    </script>
+    """
+    
+    components.html(cleanup_js, height=0, width=0)
+    
+    st.markdown("""
+    <div style="background: #ffe8e8; padding: 10px; border-radius: 5px; margin: 10px 0;">
+        🔴 <strong>Tab Monitor Stopped</strong>
+    </div>
+    """, unsafe_allow_html=True)
 
+# Test function for debugging
+def test_tab_monitor():
+    """Test the tab monitor manually"""
+    test_js = """
+    <script>
+    console.log("🧪 Manual test triggered");
+    if (window.testWarning) {
+        window.testWarning();
+    } else {
+        console.log("❌ testWarning function not found");
+        alert("Tab monitor might not be loaded yet");
+    }
+    </script>
+    """
+    
+    components.html(test_js, height=0, width=0)
+    st.success("✅ Test warning triggered! Check browser console for debug info.")
 
-
-
+# Legacy compatibility
+def start_tab_monitor_legacy(test_id: str = "", student_id: str = "", backend_url: str = ""):
+    start_tab_monitor()

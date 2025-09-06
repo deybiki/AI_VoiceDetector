@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2025-09-06T21:38:24.075308",
+    "status": "no_face",
+    "snapshot": "snapshot_1757174904.jpg"
+  },
+  {
+    "timestamp": "2025-09-06T21:38:36.222868",
+    "status": "no_face",
+    "snapshot": "snapshot_1757174916.jpg"
+  },
+  {
+    "timestamp": "2025-09-06T21:38:48.453126",
+    "status": "no_face",
+    "snapshot": "snapshot_1757174928.jpg"
+  },
+  {
+    "timestamp": "2025-09-06T21:38:58.498398",
+    "status": "ok",
+    "snapshot": "snapshot_1757174938.jpg"
+  }
+]
