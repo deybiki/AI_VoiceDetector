@@ -15,6 +15,14 @@ export const createTest = async (req, res) => {
       let { scholarIds } = req.body;
 
       const sharedLinkId = uuidv4();
+      
+      const startDate=new Date(start_time)
+      const endDate=new Date(end_time)
+      
+      if (endDate <= startDate) {
+         return res.status(400).json({ msg: "end_time must be after start_time" });
+         }
+
 
       if (typeof scholarIds === "string") scholarIds = [scholarIds]
       if (!Array.isArray(scholarIds) || !scholarIds.length)

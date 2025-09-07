@@ -1,3 +1,4 @@
+import axiosInstance from "../../api/axiosInstance";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -13,10 +14,12 @@ const EvaluatorAssignmentAccept = () => {
    useEffect(() => {
       const acceptAssignment = async () => {
          try {
-            await axios.get(
-               `http://localhost:5000/api/evaluator/accept?testId=${testId}&token=${token}`,
-               { withCredentials: true }
-            );
+            // await axios.get(
+            //    `http://localhost:5000/api/evaluator/accept?testId=${testId}&token=${token}`,
+            //    { withCredentials: true }
+            // );
+            await axiosInstance.get(`/evaluator/accept?testId=${testId}&token=${token}`, 
+               {withCredentials:true});
             toast.success("You have been added as an evaluator!");
             setTimeout(() => navigate("/evaluator/dashboard"), 1200);
          } catch (err) {

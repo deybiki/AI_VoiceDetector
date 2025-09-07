@@ -41,10 +41,10 @@ const Prof_Signup = ({ onClose }) => {
     e.preventDefault();
 
     // ✅ Check admin password before API call
-    if (adminPassword !== "1507") {
-      handleError("Admin password incorrect!");
-      return;
-    }
+if (adminPassword !== process.env.ADMIN_PASSWORD) {
+  handleError("Admin password incorrect!");
+  return;
+}
 
     try {
       const payload = {
