@@ -1,4 +1,9 @@
 
+
+
+
+
+
 import streamlit as st
 import time, json, os, subprocess, asyncio, tempfile, threading
 from datetime import datetime
@@ -8,14 +13,16 @@ import requests
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from bson import ObjectId
-from textwrap import dedent 
 import streamlit.components.v1 as components
-# from streamlit_autorefresh import st_autorefresh
+import base64
+from mutagen.mp3 import MP3
+
+
 
 # --- COMPONENT IMPORTS ---
 from face_monitor import render_face_monitor, ensure_camera_started,camera_check_ui
 from llm_scoring import score_all_responses ,score_single_response
-from full_screen import start_tab_monitor
+# from full_screen import start_tab_monitor, stop_tab_monitor
 
 st.set_page_config(page_title="AI Viva System", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""<style>[data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}</style>""", unsafe_allow_html=True)
@@ -33,42 +40,191 @@ st.markdown("""
 
 
 # ---------- helpers (unchanged in spirit) ----------
-def speak(text):
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:  # synthesize
-            fname = tmp.name
-        asyncio.run(edge_tts.Communicate(text, "en-IN-PrabhatNeural").save(fname))
-        subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", fname],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    finally:
-        try: os.remove(fname)
-        except Exception: pass
+# def speak(text):
+#     try:
+#         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:  # synthesize
+#             fname = tmp.name
+#         asyncio.run(edge_tts.Communicate(text, "en-IN-PrabhatNeural").save(fname))
+#         subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", fname],
+#                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+#     finally:
+#         try: os.remove(fname)
+#         except Exception: pass
 
-def play_beep():
+# def play_beep():
+#     p = os.path.abspath("beep-05.wav")
+#     if os.path.exists(p):
+#         subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", p],
+#                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def play_mp3_client_and_wait(mp3_path):
+    if not os.path.exists(mp3_path):
+        print("Missing mp3:", mp3_path)
+        return
+    with open(mp3_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    components.html(
+        f'<audio autoplay>'
+        f'<source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>',
+        height=0,
+        
+    )
+    try:
+        duration = MP3(mp3_path).info.length
+    except Exception:
+        duration = 2.0
+    time.sleep(duration + 0.15)
+
+
+
+def play_beep_client():
     p = os.path.abspath("beep-05.wav")
-    if os.path.exists(p):
-        subprocess.run(["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", p],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if not os.path.exists(p):
+        return
+    with open(p, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    components.html(f'<audio autoplay><source src="data:audio/wav;base64,{b64}" type="audio/wav"></audio>', height=0)
+
+
+# def play_beep_client():
+#     p = os.path.abspath("beep-05.wav")
+#     if not os.path.exists(p):
+#         return
+#     with open(p, "rb") as f:
+#         b64 = base64.b64encode(f.read()).decode()
+#     components.html(
+#         f"""
+#         <audio autoplay>
+#             <source src="data:audio/wav;base64,{b64}" type="audio/wav">
+#         </audio>
+#         """,
+#         height=0,
+#         key=f"beep_{time.time()}",  # 👈 force reload every call
+#     )
+
+
+
+
+
+
+
+def pre_synthesize_questions(questions, out_dir, voice="en-IN-PrabhatNeural"):
+    os.makedirs(out_dir, exist_ok=True)
+    for i, q in enumerate(questions, start=1):
+        fname = os.path.join(out_dir, f"q{i}.mp3")
+        if os.path.exists(fname):
+            # print(f"[TTS] Skipping existing {fname}")
+            continue
+        try:
+            # print(f"[TTS] Synthesizing q{i} ...")
+            asyncio.run(edge_tts.Communicate(q, voice).save(fname))
+        except Exception as e:
+            print(f"[TTS] Error for q{i}: {e}")
+            # optionally retry once
+            try:
+                asyncio.run(edge_tts.Communicate(q, voice).save(fname))
+            except Exception as e2:
+                print(f"[TTS] Retry failed: {e2}")
+
+
+# def threaded_record_audio(filename, duration, fs=44100):
+#     try:
+#         audio = sd.rec(int(duration*fs), samplerate=fs, channels=1, dtype='int16')
+#         sd.wait()
+#         write(filename, fs, audio)
+#     finally:
+#         st.session_state['recording_complete'] = True
+
 
 def threaded_record_audio(filename, duration, fs=44100):
+    """Record in a background thread, write WAV and wait until file is visible & non-empty."""
     try:
-        audio = sd.rec(int(duration*fs), samplerate=fs, channels=1, dtype='int16')
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        audio = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
         sd.wait()
         write(filename, fs, audio)
+
+        # Wait up to N seconds for file to appear and have a size > header size
+        timeout = 5.0
+        start = time.time()
+        while True:
+            if os.path.exists(filename) and os.path.getsize(filename) > 44:
+                # file looks valid
+                break
+            if time.time() - start > timeout:
+                print(f"[recording] timeout waiting for audio file: {filename}")
+                break
+            time.sleep(0.05)
+
+    except Exception as e:
+        print(f"[recording] error writing {filename}: {e}")
     finally:
+        # Mark recording complete (consistent signal to main thread)
         st.session_state['recording_complete'] = True
 
-def transcribe_audio(filename):
-    if not filename or not os.path.exists(filename): return "No audio file."
-    r = sr.Recognizer()
-    with sr.AudioFile(filename) as src:
-        audio = r.record(src)
+
+
+
+# def transcribe_audio(filename):
+#     if not filename or not os.path.exists(filename): return "No audio file."
+#     r = sr.Recognizer()
+#     with sr.AudioFile(filename) as src:
+#         audio = r.record(src)
+#     try:
+#         return r.recognize_google(audio)
+#     except sr.UnknownValueError:
+#         return "Could not understand audio."
+#     except sr.RequestError as e:
+#         return f"API error: {e}"
+
+
+
+
+def transcribe_audio(filename, wait_timeout=5.0):
+    """
+    Wait for the file to exist & be non-empty, then run speech_recognition.
+    Returns a string (transcript) or "No audio file." / error messages.
+    """
+    if not filename:
+        return "No audio file."
+    path = os.path.abspath(filename)
+
+    # Wait for file presence + reasonable size
+    start = time.time()
+    while True:
+        if os.path.exists(path):
+            try:
+                size = os.path.getsize(path)
+            except Exception:
+                size = 0
+            if size > 44:  # WAV header ~44 bytes; protects against zero-length
+                break
+        if time.time() - start > wait_timeout:
+            print(f"[transcribe] file not present/too small after {wait_timeout}s: {path}")
+            return "No audio file."
+        time.sleep(0.08)
+
+    # Now try transcription
     try:
-        return r.recognize_google(audio)
-    except sr.UnknownValueError:
-        return "Could not understand audio."
-    except sr.RequestError as e:
-        return f"API error: {e}"
+        r = sr.Recognizer()
+        with sr.AudioFile(path) as src:
+            audio = r.record(src)
+        try:
+            text = r.recognize_google(audio)
+            return text
+        except sr.UnknownValueError:
+            return "Could not understand audio."
+        except sr.RequestError as e:
+            return f"API error: {e}"
+    except Exception as e:
+        print(f"[transcribe] unexpected error for {path}: {e}")
+        return f"Transcription error: {e}"
+
+
+
+
+
+
 
 # ---------- state ----------
 if 'current_q' not in st.session_state: st.session_state.current_q = 0
@@ -81,9 +237,35 @@ for k in ['interview_started','id_confirmed','terminate_clicked','is_recording',
 # ---------- load questions (your existing DB code remains) ----------
 load_dotenv("../backend/.env")
 MONGO_URI = os.getenv("MONGO_URI")
-client = MongoClient(MONGO_URI)
-db = client.get_database("test")
-tests_collection = db.get_collection("tests")
+
+
+
+@st.cache_resource
+def get_client(uri):
+    return MongoClient(uri)
+
+# Create client only once
+client = get_client(MONGO_URI)
+
+# Pick the database (example: "test")
+db = client["test"]
+
+# Pick the collection
+tests_collection = db["tests"]
+
+# Example debug
+# st.write("✅ Connected to MongoDB, using DB:", db.name)
+
+
+
+
+
+# client = MongoClient(MONGO_URI)
+
+# db = client.get_database("test")
+
+# tests_collection = db.get_collection("tests")
+
 query_params = st.query_params
 test_id = str(query_params.get("testId", "")).strip()
 
@@ -128,6 +310,8 @@ if not questions:
 st.session_state.reference_answers = reference_answers
 # print("✅ Loaded reference answers:", reference_answers)
 
+# pre_synthesize_questions(questions, st.session_state.attempt_dir)
+
 
 
 
@@ -151,6 +335,12 @@ if st.session_state.get("candidate_id") != student_id:
         f"{st.session_state.candidate_id}_{attempt_id}"
     )
     os.makedirs(st.session_state.attempt_dir, exist_ok=True)
+
+# pre_synthesize_questions(questions, st.session_state.attempt_dir)
+
+with st.spinner("⏳ Exam is loading, please wait..."):
+    pre_synthesize_questions(questions, st.session_state.attempt_dir)
+
 
 def show_countdown(message, secs=3):
     ph = st.empty()
@@ -233,7 +423,7 @@ def render_timer_box(remaining: int):
 
 
 
-RECORDING_DURATION = 25
+RECORDING_DURATION = 31
 st.title("AI-powered Viva-Voice System")
 
 # ---------- confirm ID ----------
@@ -245,14 +435,7 @@ if not st.session_state.id_confirmed:
     except Exception:
         pass
 
-    # cand_in = st.text_input("Enter your Candidate ID to begin:", value=student_id)
-    # if st.button("Confirm ID"):
-    #     if cand_in == student_id:
-    #         st.session_state.id_confirmed = True
-    #         st.rerun()
-    #     else:
-    #         st.error("❌ Entered ID does not match.")
-    # st.stop()
+    
 
 # ---------- start interview: welcome is BLOCKING, then start camera ----------
 
@@ -291,17 +474,25 @@ if not st.session_state.id_confirmed:
     st.stop()
 
 # ---------- Rules Page ----------
+
 if not st.session_state.rules_accepted:
     st.header("Viva Rules & Regulations")
     st.markdown(
         """
-        - Camera must remain **ON** during viva.  
-        - Face must remain **clearly visible**.  
-        - No background noise or external help.  
-        - Answer clearly within the **time limit**.  
-        - Once you proceed, viva will begin.  
+        - Throughout the exam, you will be under **camera monitoring** and your behavior will be logged.  
+        - Any **undesirable behavior** may lead to **disqualification**.  
+        - Ensure you have a **high-speed internet connection**, a **quiet environment**, and a room with **proper lighting**.  
+        - **Do not switch tabs** or leave the viva window; such actions will be monitored and logged.  
+        - Answer **within the time limit** for each question. You will have **30 seconds per question**. 
+        - After the beep sound, you may start answering, and continue until the timer ends and the beep sounds again.  
+        - Speak **clearly and loudly** so your answers can be accurately recorded and assessed. 
+        - Once you click **Start Exam**, the viva will begin. After submitting your responses, **please wait** for results and feedback.  
+
+        **Thank you! Wishing you the best viva experience.**
         """
     )
+
+
 
     agree = st.checkbox(" I have read and agree to the rules")
     proceed_btn = st.button("Proceed", disabled=not agree)
@@ -346,6 +537,14 @@ if st.session_state.rules_accepted and not st.session_state.camera_checked:
 
 
 
+# Pre-synthesize all questions at once (optional)
+
+
+
+
+
+
+
 # ---------- Start Test Page ----------
 
 
@@ -355,64 +554,27 @@ if st.session_state.camera_checked and not st.session_state.interview_started:
 
     if st.button("Start Test", key="start_test_btn"):
         with st.spinner("Playing welcome message..."):
-            speak("Welcome to this Examination. Please listen carefully and answer within the time limit.")
+            # speak("Welcome to this Examination. Please listen carefully and answer within the time limit.")
+              welcome_path = os.path.join(st.session_state.attempt_dir, "welcome.mp3")
+              if not os.path.exists(welcome_path):
+                 asyncio.run(edge_tts.Communicate(
+                      "Welcome to this Examination. Please listen carefully and answer within the time limit.",
+                      "en-IN-PrabhatNeural"
+            ).save(welcome_path))
+
+        play_mp3_client_and_wait(welcome_path)
+
+
         ensure_camera_started()
         
         st.session_state.interview_started = True
         # start_tab_monitor(test_id, student_id, backend_url="http://localhost:5000/api")
-        start_tab_monitor(
-        test_id=st.session_state["test_id"],
-        student_id=st.session_state["candidate_id"],
-        backend_url="http://localhost:5000/api"
-)
-
-    
-    
+        # start_tab_monitor()
 
         st.rerun()
     st.stop()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# candidate_dir = st.session_state.attempt_dir
-# init_fullscreen_monitor(candidate_dir)
 
 
 
@@ -444,9 +606,15 @@ if q_idx < len(questions) and not st.session_state.terminate_clicked:
         if not st.session_state.get(q_key, False):
             st.session_state[q_key] = True
         show_countdown("Question will play start in", secs=3)
-        play_beep()
-        speak(question)   # blocking
-        play_beep()
+
+        # play_beep()
+        # speak(question)   # blocking
+        # play_beep()
+
+        # play_beep_client()  # browser plays beep
+        mp3_path = os.path.join(st.session_state.attempt_dir, f"q{q_idx + 1}.mp3")
+        play_mp3_client_and_wait(mp3_path)  # browser plays synthesized question
+        # play_beep_client()
 
         time.sleep(2) 
         
@@ -475,13 +643,15 @@ if q_idx < len(questions) and not st.session_state.terminate_clicked:
         render_timer_box(remaining)
 
         if remaining <= 0 or st.session_state.get("recording_complete", False):
-            play_beep()  # end signal
+            # play_beep()
+            play_beep_client()  # end signal
             time.sleep(0.2)  # small gap for file flush
 
             st.session_state.timer_container.markdown("### ⏰ **Oops! Time's up!**")
             time.sleep(1)
 
-            audio_fname = os.path.join(candidate_dir, f"q{q_idx + 1}_answer.wav")
+            # audio_fname = os.path.join(candidate_dir, f"q{q_idx + 1}_answer.wav")
+            audio_fname = os.path.abspath(os.path.join(candidate_dir, f"q{q_idx + 1}_answer.wav"))
             transcript = transcribe_audio(audio_fname).strip()
             st.session_state.responses.append({
                 "question_number": q_idx + 1,
@@ -510,6 +680,8 @@ if not st.session_state.terminate_clicked and st.session_state.current_q >= len(
 
     if st.button("Submit and Show Results", key="terminate_btn_final"):
         #  mark terminated so camera stops
+        # stop_tab_monitor()
+
         st.session_state.terminate_clicked = True  
 
         #  stop camera explicitly
@@ -555,7 +727,6 @@ if st.session_state.interview_started and not st.session_state.terminate_clicked
     # mild refresh so preview updates (~2 fps) but UI stays responsive
     time.sleep(0.5)
     st.rerun()
-
 
 
 

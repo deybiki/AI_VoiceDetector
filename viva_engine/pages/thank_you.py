@@ -11,7 +11,7 @@ from datetime import datetime
 import requests
 from sentence_transformers import SentenceTransformer, util
 import threading
-from full_screen import stop_tab_monitor
+
 
 
 # model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -143,17 +143,17 @@ if st.session_state.view == 'results':
             # Show question + scores
             st.markdown(f"**Q: {result['question']}**")
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("GPT Score", f"{result.get('gpt_4_score', 'N/A')}/10")
-            col2.metric("Claude Score", f"{result.get('opus_4_score', 'N/A')}/10")
-            col3.metric("Meta Score", f"{result.get('llama_3.3_score', 'N/A')}/10")
+            col1.metric("Kimi K2  Score", f"{result.get('gpt_4_score', 'N/A')}/10")
+            col2.metric("Google DeepMind Score", f"{result.get('opus_4_score', 'N/A')}/10")
+            col3.metric("Llama Score", f"{result.get('llama_3.3_score', 'N/A')}/10")
             col4.metric("Average", f"{result.get('average_score', 'N/A')}/10")
             st.markdown("---")
 
             # Feedback
             with st.expander(f"Feedback for: **{result['question']}**"):
-                st.markdown(f"**GPT Feedback:** {result.get('gpt_feedback', 'N/A')}")
-                st.markdown(f"**Claude Feedback:** {result.get('claude_feedback', 'N/A')}")
-                st.markdown(f"**Meta Feedback:** {result.get('llama_feedback', 'N/A')}")
+                st.markdown(f"**Kimi K2 Feedback:** {result.get('gpt_feedback', 'N/A')}")
+                st.markdown(f"**Google DeepMind Feedback:** {result.get('claude_feedback', 'N/A')}")
+                st.markdown(f"**Llama Feedback:** {result.get('llama_feedback', 'N/A')}")
 
     else:
         st.error("No scoring results to display.")
@@ -217,7 +217,7 @@ elif st.session_state.view == 'feedback':
 
 elif st.session_state.view == 'final_thank_you':
     # exit fullscreen cleanly
-    stop_tab_monitor()
+    
 
     st.success("**Thank you for completing the viva and providing your valuable feedback!**")
     st.balloons()
