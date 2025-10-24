@@ -1,3 +1,25 @@
+# streamlit
+# requests
+# openai
+# python-dotenv
+# retry
+# edge-tts
+# SpeechRecognition
+# sounddevice
+# scipy
+# pymongo
+# opencv-python
+# Groq
+# Sentence-transformers
+# mutagen
+# streamlit-audiorecorder
+# pydub
+# streamlit-webrtc
+# av
+# numpy
+# soundfile
+# typing
+
 streamlit
 requests
 openai
@@ -12,3 +34,5 @@ opencv-python
 Groq
 Sentence-transformers
 mutagen
+google-generativeai
+cerebras-cloud-sdk

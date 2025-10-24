@@ -143,16 +143,18 @@ if st.session_state.view == 'results':
             # Show question + scores
             st.markdown(f"**Q: {result['question']}**")
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Kimi K2  Score", f"{result.get('gpt_4_score', 'N/A')}/10")
-            col2.metric("Google DeepMind Score", f"{result.get('opus_4_score', 'N/A')}/10")
+    
+            col2.metric("Gemini Score", f"{result.get('gemini_score', 'N/A')}/10")
+            col1.metric("Kimi K2 Score", f"{result.get('kimi_score', 'N/A')}/10")
             col3.metric("Llama Score", f"{result.get('llama_3.3_score', 'N/A')}/10")
             col4.metric("Average", f"{result.get('average_score', 'N/A')}/10")
             st.markdown("---")
 
             # Feedback
             with st.expander(f"Feedback for: **{result['question']}**"):
-                st.markdown(f"**Kimi K2 Feedback:** {result.get('gpt_feedback', 'N/A')}")
-                st.markdown(f"**Google DeepMind Feedback:** {result.get('claude_feedback', 'N/A')}")
+                
+                st.markdown(f"**Gemini Feedback:** {result.get('gemini_feedback', 'N/A')}")
+                st.markdown(f"**Kimi K2 Feedback:** {result.get('kimi_feedback', 'N/A')}")
                 st.markdown(f"**Llama Feedback:** {result.get('llama_feedback', 'N/A')}")
 
     else:

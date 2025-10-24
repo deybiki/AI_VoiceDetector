@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env   # MongoDB info
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+
+  viva_engine:
+    build: ./viva_engine
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./viva_engine/interviews:/app/interviews
+    depends_on:
+      - backend
+    env_file:
+      - ./viva_engine/.env   # API keys
+

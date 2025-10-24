@@ -33,7 +33,7 @@ export const addPendingEvaluator = async (req, res) => {
          let evaluator = await Evaluator.findOne({ email: evaluatorEmail })
 
          if (evaluator) {
-            const acceptToken = jwt.sign({ evaluatorId: evaluator._id, testId }, process.env.JWT_SECRET, { expiresIn: "15m" })
+            const acceptToken = jwt.sign({ evaluatorId: evaluator._id, testId }, process.env.JWT_SECRET, { expiresIn: "7d" })
 
             const link = `http://localhost:3000/evaluator/accept?testId=${testId}&token=${acceptToken}`;
 
@@ -189,6 +189,28 @@ export const getEvaluatorTests = async (req, res) => {
    }
 }
 
+
+
+// export const getEvaluatorTests = async (req, res) => {
+//    try {
+//       const { evaluator } = req
+//       console.log("evaluator:", evaluator);
+//       const tests = await Test.find({ evaluators: evaluator._id || evaluator._id })
+//       console.log("evaluator tests:", tests);
+//       console.log(typeof (evaluator.id))
+//       return res.status(200).json({ msg: "Tests for evaluator fetched", tests })
+//    } catch (error) {
+
+//       console.log(error)
+//       return res.status(500).json({ msg: "Invalid entry" })
+//    }
+// }
+
+
+
+
+
+
 export const getTestAttempts = async (req, res) => {
    try {
       const { testId } = req.params
@@ -204,6 +226,13 @@ export const getTestAttempts = async (req, res) => {
       return res.status(500).json({ msg: "Internal error occured" })
    }
 }
+
+
+
+
+
+
+
 
 export const getTestAttempt = async (req, res) => {
    try {
