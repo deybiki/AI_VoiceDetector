@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "a process in operating system is program under execution",
+        "kimi_score": 6.0,
+        "gemini_score": 6.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 6.0,
+        "kimi_feedback": "Correct core idea but lacks detail on PCB, states, or resources; very brief.",
+        "gemini_feedback": "Accurate but lacks depth and detail.",
+        "llama_feedback": "Answer is mostly correct but lacks detailed explanation and clarity"
+    },
+    {
+        "question": "what is a system call ?",
+        "answer": "system call in operating system is called it is made by different applications present in the system to the kernel which is also called as the core of operating system or how to operating system",
+        "kimi_score": 3.0,
+        "gemini_score": 4.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 4.33,
+        "kimi_feedback": "Answer is garbled; core idea that apps request kernel services is present but lacks accuracy, structure, and correct terminology.",
+        "gemini_feedback": "The answer is partially accurate but lacks clarity and coverage. It correctly identifies system calls as requests from applications to the kernel but is poorly phrased and doesn't explain the purpose or function.",
+        "llama_feedback": "Answer is partially correct but lacks clarity and proper terminology"
+    }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "timestamp": "2025-12-16T18:38:49.759567",
+    "status": "multi_face",
+    "snapshot": "snapshot_1765890529.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:39:00.448510",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890540.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:39:20.856176",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890560.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:39:39.128975",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890579.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:39:54.560034",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890594.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:40:08.598329",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890608.jpg"
+  }
+]

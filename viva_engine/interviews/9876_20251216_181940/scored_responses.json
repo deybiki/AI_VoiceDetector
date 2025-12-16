@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "process in operating system is program under execution",
+        "kimi_score": 6.0,
+        "gemini_score": -1,
+        "llama_3.3_score": 6.0,
+        "average_score": 6.0,
+        "kimi_feedback": "Correct core idea but lacks depth\u2014no mention of PCB, states, or resources.",
+        "gemini_feedback": "N/A",
+        "llama_feedback": "Answer is correct but lacks detailed explanation and clarity"
+    },
+    {
+        "question": "what is a system call ?",
+        "answer": "No audio file.",
+        "kimi_score": 0.0,
+        "gemini_score": -1,
+        "llama_3.3_score": 0.0,
+        "average_score": 0.0,
+        "kimi_feedback": "No answer provided.",
+        "gemini_feedback": "N/A",
+        "llama_feedback": "The student failed to provide a relevant answer to the question about system calls."
+    }
+]

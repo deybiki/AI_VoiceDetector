@@ -1,0 +1,14 @@
+[
+    {
+        "question_number": 1,
+        "question": "what is a process?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\9876_20251216_181940\\q1_answer.wav",
+        "transcript": "process in operating system is program under execution"
+    },
+    {
+        "question_number": 2,
+        "question": "what is a system call ?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\9876_20251216_181940\\q2_answer.wav",
+        "transcript": "No audio file."
+    }
+]

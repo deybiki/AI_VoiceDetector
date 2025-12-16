@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "filhal To Kuchh Nahin Hai yah to system Hai system Se Maine exam Diya Hai Logon Ko Lekar usko main analyse kar raha hun ki AI aur human Kitna Aage Piche Hai Uske bad last Mein Main Koi model repairing",
+        "kimi_score": 0.0,
+        "gemini_score": -1,
+        "llama_3.3_score": 0.0,
+        "average_score": 0.0,
+        "kimi_feedback": "Answer is completely off-topic and does not address the question about what a process is in operating systems.",
+        "gemini_feedback": "N/A",
+        "llama_feedback": "The answer does not address the question about what a process is in the context of operating systems."
+    },
+    {
+        "question": "what is a system call ?",
+        "answer": "student Uske bad Mein comparison Karunga Mein Kitna Antar hai kya hai kya Nahin Hai vah Sab chijen",
+        "kimi_score": 0.0,
+        "gemini_score": -1,
+        "llama_3.3_score": 0.0,
+        "average_score": 0.0,
+        "kimi_feedback": "No relevant content provided; answer is off-topic.",
+        "gemini_feedback": "N/A",
+        "llama_feedback": "The student's answer is completely irrelevant and does not address the question about system calls."
+    }
+]

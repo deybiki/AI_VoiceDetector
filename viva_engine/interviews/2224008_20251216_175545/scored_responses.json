@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "No audio file.",
+        "kimi_score": 0.0,
+        "gemini_score": 0.0,
+        "llama_3.3_score": 0.0,
+        "average_score": 0.0,
+        "kimi_feedback": "No answer provided to evaluate.",
+        "gemini_feedback": "The student provided no answer, so no evaluation can be made.",
+        "llama_feedback": "The student did not provide a valid answer to the question."
+    },
+    {
+        "question": "what is a system call ?",
+        "answer": "system call is a call meet my different application present in a system to the operating system core that is called kernel",
+        "kimi_score": 4.0,
+        "gemini_score": 6.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 5.33,
+        "kimi_feedback": "Partially correct but vague; misses key points like user-to-kernel mode switch and specific services requested.",
+        "gemini_feedback": "The answer is partially correct but lacks clarity and precision in terminology.",
+        "llama_feedback": "Answer is partially correct but lacks clarity and proper terminology"
+    }
+]

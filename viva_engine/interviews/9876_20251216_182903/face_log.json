@@ -1,0 +1,27 @@
+[
+  {
+    "timestamp": "2025-12-16T18:29:41.290876",
+    "status": "multi_face",
+    "snapshot": "snapshot_1765889981.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:29:49.719826",
+    "status": "ok",
+    "snapshot": "snapshot_1765889989.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:30:02.417252",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890002.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:30:18.922586",
+    "status": "no_face",
+    "snapshot": "snapshot_1765890018.jpg"
+  },
+  {
+    "timestamp": "2025-12-16T18:30:33.750680",
+    "status": "ok",
+    "snapshot": "snapshot_1765890033.jpg"
+  }
+]

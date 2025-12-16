@@ -1,0 +1,14 @@
+[
+    {
+        "question_number": 1,
+        "question": "what is a process?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\2001_20251216_174927\\q1_answer.wav",
+        "transcript": "process in operating system is program under execution each process has its own data code and processes communicate with each other using interface communication it is the smallest unit of"
+    },
+    {
+        "question_number": 2,
+        "question": "what is a system call ?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\2001_20251216_174927\\q2_answer.wav",
+        "transcript": "system call in operating system is a call made by different application present in the system to the kernel which is also called as core of operating system"
+    }
+]

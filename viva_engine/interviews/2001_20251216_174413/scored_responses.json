@@ -1,0 +1,24 @@
+[
+    {
+        "question": "what is a process?",
+        "answer": "a process in operating system is program under execution each process has its own data code in processes communicate with each other using inter process communication",
+        "kimi_score": 6.0,
+        "gemini_score": 7.0,
+        "llama_3.3_score": 8.0,
+        "average_score": 7.0,
+        "kimi_feedback": "Correct core idea but missing key concepts like PCB, states, and structure; reasoning and clarity weak.",
+        "gemini_feedback": "The answer is mostly accurate and covers key aspects, but could be more detailed and structured.",
+        "llama_feedback": "Answer is mostly correct but lacks detailed explanation of inter process communication"
+    },
+    {
+        "question": "what is a system call ?",
+        "answer": "system call in operating system is called that is made by different application present in the system to the kernel",
+        "kimi_score": 4.0,
+        "gemini_score": 6.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 5.33,
+        "kimi_feedback": "Partially correct but lacks depth: misses user-to-kernel transition, services provided, and proper structure.",
+        "gemini_feedback": "The answer is accurate but lacks depth and detail.",
+        "llama_feedback": "Answer is partially correct but lacks detailed explanation and clarity"
+    }
+]

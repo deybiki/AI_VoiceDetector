@@ -1,0 +1,20 @@
+[
+    {
+        "question_number": 1,
+        "question": "what is a process?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\2224008_20251216_180013\\q1_answer.wav",
+        "transcript": "a process in operating system is program under execution each process has its own data on code and processes communicate with using inter process communication"
+    },
+    {
+        "question_number": 1,
+        "question": "what is a process?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\2224008_20251216_180013\\q1_answer.wav",
+        "transcript": "a process in operating system is program under execution each process has its own data on code and processes communicate with using inter process communication"
+    },
+    {
+        "question_number": 2,
+        "question": "what is a system call ?",
+        "audio_file": "D:\\Viva_voce_system\\AI_VoiceDetector\\viva_engine\\interviews\\2224008_20251216_180013\\q2_answer.wav",
+        "transcript": "a system call in operating system is a call made by different application present in the system to the kernel which is also called as the Coral operating system for some particular operating system services"
+    }
+]
