@@ -1,0 +1,72 @@
+[
+  {
+    "timestamp": "2026-03-06T14:50:43.965958",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788843.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:50:54.705076",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788854.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:51:06.863519",
+    "status": "ok",
+    "snapshot": "snapshot_1772788866.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:51:29.965294",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788889.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:51:41.676516",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788901.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:51:54.679440",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788914.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:52:15.553082",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788935.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:52:29.911077",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788949.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:52:39.065892",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788959.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:52:59.882466",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788979.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:53:12.050924",
+    "status": "no_face",
+    "snapshot": "snapshot_1772788992.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:53:23.484835",
+    "status": "no_face",
+    "snapshot": "snapshot_1772789003.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:53:32.609776",
+    "status": "no_face",
+    "snapshot": "snapshot_1772789012.jpg"
+  },
+  {
+    "timestamp": "2026-03-06T14:54:01.297944",
+    "status": "no_face",
+    "snapshot": "snapshot_1772789041.jpg"
+  }
+]

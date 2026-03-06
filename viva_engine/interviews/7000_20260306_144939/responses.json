@@ -1,0 +1,26 @@
+[
+    {
+        "question_number": 1,
+        "question": "what is a process?",
+        "audio_file": "C:\\Users\\asus\\OneDrive\\Desktop\\test_V5\\AI_VoiceDetector\\viva_engine\\interviews\\7000_20260306_144939\\q1_answer.wav",
+        "transcript": "process is program under execution research Smallest unit of a program"
+    },
+    {
+        "question_number": 2,
+        "question": "what is a system call ?",
+        "audio_file": "C:\\Users\\asus\\OneDrive\\Desktop\\test_V5\\AI_VoiceDetector\\viva_engine\\interviews\\7000_20260306_144939\\q2_answer.wav",
+        "transcript": "Could not understand audio."
+    },
+    {
+        "question_number": 3,
+        "question": "What is deadlock ?",
+        "audio_file": "C:\\Users\\asus\\OneDrive\\Desktop\\test_V5\\AI_VoiceDetector\\viva_engine\\interviews\\7000_20260306_144939\\q3_answer.wav",
+        "transcript": "Could not understand audio."
+    },
+    {
+        "question_number": 4,
+        "question": "what is crtical section problem ?",
+        "audio_file": "C:\\Users\\asus\\OneDrive\\Desktop\\test_V5\\AI_VoiceDetector\\viva_engine\\interviews\\7000_20260306_144939\\q4_answer.wav",
+        "transcript": "critical section is a part of operating system where the part of the part of the voice which is responsible for programming executed so in critical section problem"
+    }
+]
