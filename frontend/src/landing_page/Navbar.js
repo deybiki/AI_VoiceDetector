@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 function Navbar() {
   const location = useLocation();
 
-  const hideNavbarRoutes = ["/prof-dash", "/stud-dash","/evaluator"];
+  const hideNavbarRoutes = ["/prof-dash", "/stud-dash","/evaluator", "/viva"];
   const shouldHideNavbar = hideNavbarRoutes.some((route) =>
     location.pathname.startsWith(route)
   );

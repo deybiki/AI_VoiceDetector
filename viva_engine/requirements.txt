@@ -19,20 +19,42 @@
 # numpy
 # soundfile
 # typing
+ 
+#----------------Last list with (streamlit UI) ----------------------------
 
-streamlit
+# streamlit
+# requests
+# openai
+# python-dotenv
+# retry
+# edge-tts
+# SpeechRecognition
+# sounddevice
+# scipy
+# pymongo
+# opencv-python
+# Groq
+# Sentence-transformers
+# mutagen
+# google-generativeai
+# cerebras-cloud-sdk
+# fastapi
+# uvicorn
+
+# ---------------- Active requirements (current FastAPI + React flow) ----------------
+fastapi
+uvicorn
 requests
-openai
 python-dotenv
-retry
-edge-tts
-SpeechRecognition
-sounddevice
-scipy
 pymongo
 opencv-python
-Groq
-Sentence-transformers
+numpy
+edge-tts
+SpeechRecognition
 mutagen
+retry
+openai
+groq
 google-generativeai
 cerebras-cloud-sdk
+streamlit

@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8501
-CMD ["streamlit", "run", "interview_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "8501"]

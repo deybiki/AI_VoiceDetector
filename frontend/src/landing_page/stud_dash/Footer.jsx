@@ -224,8 +224,8 @@ const Footer = () => {
       );
 
       if (res.status === 200) {
-        const streamlitUrl = `http://localhost:8501/?testId=${sharedLinkId}&studentId=${studentId}`;
-        window.open(streamlitUrl, "_blank");
+        const vivaReactUrl = `http://localhost:3000/viva?testId=${sharedLinkId}&studentId=${studentId}`;
+        window.open(vivaReactUrl, "_blank");
       } else {
         alert(
           "⚠️ Could not start the test. Server returned unexpected response."

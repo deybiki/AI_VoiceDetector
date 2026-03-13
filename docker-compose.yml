@@ -15,6 +15,7 @@ services:
       - backend
     environment:
       - REACT_APP_API_URL=http://localhost:5000
+      - REACT_APP_VIVA_ENGINE_URI=http://localhost:8501
 
   viva_engine:
     build: ./viva_engine

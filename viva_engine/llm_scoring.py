@@ -17,6 +17,38 @@ from groq import Groq
 import google.generativeai as genai
 from cerebras.cloud.sdk import Cerebras
 
+SCORING_CONTEXT = {
+    "test_description": "",
+    "attempt_dir": "",
+}
+
+
+def set_scoring_context(test_description: str = "", attempt_dir: str = ""):
+    SCORING_CONTEXT["test_description"] = test_description or ""
+    SCORING_CONTEXT["attempt_dir"] = attempt_dir or ""
+
+
+def _get_test_description() -> str:
+    try:
+        if "test_description" in st.session_state:
+            return st.session_state.get("test_description", "")
+    except Exception:
+        pass
+    return SCORING_CONTEXT.get("test_description", "")
+
+
+def _get_attempt_dir(candidate_id: str) -> str:
+    try:
+        if "attempt_dir" in st.session_state:
+            path = st.session_state.get("attempt_dir")
+            if path:
+                return path
+    except Exception:
+        pass
+    if SCORING_CONTEXT.get("attempt_dir"):
+        return SCORING_CONTEXT["attempt_dir"]
+    return os.path.join("interviews", candidate_id)
+
 
 
 # ------------------- API Key Configuration ------------------- #
@@ -112,6 +144,15 @@ client_deepseek = init_groq_client(Deepseek_API_KEY, "DEEPSEEK")
 client_2_deepseek = init_groq_client(Deepseek_2_API_KEY, "DEEPSEEK")
 
 
+def _needs_fallback(result: Dict) -> bool:
+    if not isinstance(result, dict):
+        return True
+    try:
+        return float(result.get("score", -1)) < 0
+    except Exception:
+        return True
+
+
 
 
 
@@ -164,7 +205,7 @@ def ask_model(client, model: str, question: str, answer: str) -> Dict:
         prompt = f"""
 Evaluate the student's viva answer (ignore typos).
 
-Context: {st.session_state['test_description']}
+Context: {_get_test_description()}
 Question: {question}
 Answer: {answer}
 
@@ -200,7 +241,7 @@ def ask_groq_model(client, model: str, question: str, answer: str) -> Dict:
         prompt = f"""
 Evaluate the student's viva answer (ignore typos).
 
-Context: {st.session_state['test_description']}
+Context: {_get_test_description()}
 
 Question: {question}
 Answer: {answer}
@@ -240,7 +281,7 @@ def ask_gemini_native(client, question: str, answer: str) -> Dict:
     prompt = f"""
 Evaluate the student's viva answer (ignore typos).
 
-Context: {st.session_state['test_description']}
+Context: {_get_test_description()}
 
 Question: {question}
 Answer: {answer}
@@ -292,7 +333,7 @@ def ask_cerebras_model(api_key: str, question: str, answer: str) -> Dict:
         system_prompt = f"""
 Evaluate the student's viva answer (ignore typos).
 
-Context: {st.session_state['test_description']}
+Context: {_get_test_description()}
 
 Rubric (0-2 each, sum 0-10):
 1. Accuracy - facts correct
@@ -345,12 +386,17 @@ def safe_deepsk_score(q, a):
     try:
         # Try primary GPT
         # raise Exception("Simulated failure for testing fallback")
-        return ask_groq_model(client_deepseek, "moonshotai/kimi-k2-instruct-0905", q, a)
+        primary = ask_groq_model(client_deepseek, "moonshotai/kimi-k2-instruct-0905", q, a)
+        if not _needs_fallback(primary):
+            return primary
+        raise RuntimeError("Primary Deepseek returned invalid score")
     except Exception as e:
         print(f"[GPT Fallback Triggered] Primary failed: {e}")
         try:
             # Call backup GPT
             res = ask_groq_model(client_2_deepseek, "moonshotai/kimi-k2-instruct-0905", q, a)
+            if _needs_fallback(res):
+                raise RuntimeError("Backup Deepseek returned invalid score")
             res["fallback_used"] = True
             print("[GPT] Backup model used successfully")
             return res
@@ -450,7 +496,10 @@ def safe_gemini_score(q, a):
         client = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
         
         # Use the native caller
-        return ask_gemini_native(client, q, a)
+        primary = ask_gemini_native(client, q, a)
+        if not _needs_fallback(primary):
+            return primary
+        raise RuntimeError("Primary Gemini returned invalid score")
     
     except Exception as e:
         print(f"[Gemini Primary Failed] {e}. Trying fallback.")
@@ -465,6 +514,8 @@ def safe_gemini_score(q, a):
             client_fallback = genai.GenerativeModel(model_name="gemini-2.5-flash-lite")
             
             res = ask_gemini_native(client_fallback, q, a)
+            if _needs_fallback(res):
+                raise RuntimeError("Backup Gemini returned invalid score")
             res["fallback_used"] = True
             print("[Gemini] Backup key used successfully")
             
@@ -491,12 +542,17 @@ def safe_llama_score(q, a):
     try:
         # Try primary Llama
         # raise Exception("Simulated failure for testing fallback")
-         return ask_groq_model(client_llama, "llama-3.3-70b-versatile", q, a)
+        primary = ask_groq_model(client_llama, "llama-3.3-70b-versatile", q, a)
+        if not _needs_fallback(primary):
+            return primary
+        raise RuntimeError("Primary Llama returned invalid score")
     except Exception as e:
         print(f"[Llama Fallback Triggered] Primary failed: {e}")
         try:
             # Call backup Llama
             res = ask_groq_model(client_groq_2_llama, "llama-3.3-70b-versatile", q, a)
+            if _needs_fallback(res):
+                raise RuntimeError("Backup Llama returned invalid score")
             # Add a flag to indicate fallback was used
             res["fallback_used"] = True
             print("[Llama] Backup model used successfully")
@@ -535,7 +591,7 @@ def score_single_response(candidate_id: str, question: str, answer: str) -> Dict
     }
 
     # Save into the current attempt directory
-    candidate_dir = getattr(st.session_state, "attempt_dir", os.path.join("interviews", candidate_id))
+    candidate_dir = _get_attempt_dir(candidate_id)
     os.makedirs(candidate_dir, exist_ok=True)
 
     out = os.path.join(candidate_dir, "scored_responses.json")

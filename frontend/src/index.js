@@ -21,6 +21,7 @@ import EvaluatorTestAttempts from './landing_page/evaluator/EvaluatorTestAttempt
 import EvaluatorReviewAttempt from './landing_page/evaluator/EvaluatorReview';
 import EvaluatorForgotPassword from './landing_page/evaluator/forgot-password/EvaluatorForgotPassword';
 import EvaluatorAssignmentAccept from './landing_page/evaluator/EvaluatorAssignmentAccept';
+import VivaExam from './landing_page/viva/VivaExam';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -48,6 +49,7 @@ root.render(
 
          <Route path="/evaluator/forgot-password" element={<EvaluatorForgotPassword />} />
          <Route path="/evaluator/accept" element={<EvaluatorAssignmentAccept />} />
+         <Route path="/viva" element={<VivaExam />} />
 
 
       </Routes>
