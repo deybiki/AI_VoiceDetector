@@ -98,6 +98,12 @@ class SessionStore:
             raise HTTPException(status_code=404, detail="Session not found")
         return session
 
+    def find_latest_for_candidate(self, test_id: str, student_id: str) -> Dict[str, Any] | None:
+        for _, session in reversed(self._sessions.items()):
+            if session.get("test_shared_id") == test_id and session.get("student_id") == student_id:
+                return session
+        return None
+
 
 SESSIONS = SessionStore()
 
@@ -301,6 +307,17 @@ def _log_incident(session: Dict[str, Any], payload: IncidentPayload) -> None:
     logs.append(entry)
     log_path.write_text(json.dumps(logs, indent=2), encoding="utf-8")
 
+    # Strict enforcement: leaving/refreshing during active interview ends the attempt.
+    terminating_incidents = {"page_unload", "page_refresh_attempt"}
+    if (
+        payload.incident_type in terminating_incidents
+        and session.get("interview_started")
+        and not session.get("terminated")
+        and session.get("current_q", 0) < len(session.get("questions", []))
+    ):
+        session["terminated"] = True
+        session["terminated_reason"] = payload.incident_type
+
 
 app = FastAPI(title="Viva Engine API", version="1.0.0")
 app.add_middleware(
@@ -337,6 +354,16 @@ def init_session(payload: VivaSessionInit) -> Dict[str, Any]:
     test = tests_collection.find_one({"sharedLinkId": test_id})
     if not test:
         raise HTTPException(status_code=404, detail="Invalid Test ID")
+
+    existing = SESSIONS.find_latest_for_candidate(test_id=test_id, student_id=student_id)
+    if existing:
+        return {
+            "session_id": existing["session_id"],
+            "test_description": existing.get("test_description", "No description available"),
+            "question_count": len(existing.get("questions", [])),
+            "recording_duration": RECORDING_DURATION,
+            "resumed": True,
+        }
 
     qids = [ObjectId(x) for x in test.get("questions", [])]
     question_docs = list(questions_collection.find({"_id": {"$in": qids}}))

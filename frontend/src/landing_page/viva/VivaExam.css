@@ -82,6 +82,21 @@
   margin-right: auto;
 }
 
+.loading-card {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-card-inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .question-meta {
   display: flex;
   justify-content: space-between;
@@ -263,6 +278,116 @@
   background: #fcfdff;
 }
 
+.report-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.report-subtitle {
+  color: #6e8098;
+  font-size: 0.95rem;
+}
+
+.report-mini-stat {
+  min-width: 120px;
+  text-align: right;
+  padding: 8px 12px;
+  border: 1px solid #d8e7ff;
+  border-radius: 10px;
+  background: #f3f8ff;
+}
+
+.report-mini-stat span {
+  display: block;
+  font-size: 0.82rem;
+  color: #607793;
+}
+
+.report-mini-stat strong {
+  color: #0d59d1;
+  font-size: 1.22rem;
+}
+
+.detail-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  border-radius: 10px;
+  transition: background-color 0.18s ease;
+}
+
+.detail-toggle:hover {
+  background: #f5f9ff;
+}
+
+.detail-toggle-main {
+  min-width: 0;
+}
+
+.detail-question {
+  font-size: 1.18rem;
+  color: #1f2d3d;
+}
+
+.detail-avg-inline {
+  color: #1f6a42;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.detail-chevron {
+  color: #4f6480;
+  font-size: 1.2rem;
+  transition: transform 0.25s ease;
+}
+
+.detail-chevron.open {
+  transform: rotate(180deg);
+}
+
+.detail-toggle-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feedback-hint {
+  border: 1px solid #cfe0fb;
+  background: #f2f7ff;
+  color: #1f4a87;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  line-height: 1.1;
+  transition: all 0.18s ease;
+}
+
+.detail-toggle:hover .feedback-hint {
+  background: #e6f0ff;
+  border-color: #b5d0fb;
+}
+
+.detail-expand {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.28s ease, opacity 0.2s ease;
+}
+
+.detail-expand.open {
+  max-height: 460px;
+  opacity: 1;
+}
+
 .score-tag {
   display: inline-block;
   width: 100%;
@@ -390,5 +515,15 @@
 
   .viva-side {
     position: static;
+  }
+
+  .report-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .report-mini-stat {
+    width: 100%;
+    text-align: left;
   }
 }

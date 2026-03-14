@@ -4,6 +4,9 @@ import axios from "axios";
 import "./VivaExam.css";
 
 const VIVA_API = process.env.REACT_APP_VIVA_ENGINE_URI || "http://localhost:8501";
+const TIMEOUT_BEEP_URL = `${process.env.PUBLIC_URL || ""}/beep-05.wav`;
+const PRE_SUBMIT_PHASES = new Set(["loading", "interview", "submit"]);
+const POST_SUBMIT_PHASES = new Set(["summary", "detailed", "feedback", "done"]);
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -89,6 +92,7 @@ function VivaExam() {
   const [isRecording, setIsRecording] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState(null);
+  const [expandedDetailIndex, setExpandedDetailIndex] = useState(0);
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackText, setFeedbackText] = useState("");
   const [error, setError] = useState("");
@@ -104,8 +108,11 @@ function VivaExam() {
   const recordTimerRef = useRef(null);
   const randomSnapshotRef = useRef(null);
   const incidentThrottleRef = useRef({});
+  const timeoutBeepRef = useRef(null);
+  const startFlowLockRef = useRef(false);
 
   const api = useMemo(() => axios.create({ baseURL: VIVA_API }), []);
+  const attemptStorageKey = useMemo(() => `viva_attempt_${testId}_${studentId}`, [testId, studentId]);
 
   const captureFrameBlob = async () => {
     const video = videoRef.current;
@@ -197,6 +204,40 @@ function VivaExam() {
     });
   };
 
+  const playTimeoutBeep = useCallback(() => {
+    try {
+      if (timeoutBeepRef.current) {
+        timeoutBeepRef.current.currentTime = 0;
+        timeoutBeepRef.current.play().catch(() => {});
+        return;
+      }
+    } catch (_) {
+      // fallback below
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.24);
+      osc.onended = () => {
+        ctx.close().catch(() => {});
+      };
+    } catch (_) {
+      // no-op: keep exam flow unaffected
+    }
+  }, []);
+
   const runInterviewQuestion = async (q) => {
     setQuestionData(q);
     setPhase("interview");
@@ -253,6 +294,7 @@ function VivaExam() {
       setRecordingLeft((prev) => {
         if (prev <= 1) {
           clearInterval(recordTimerRef.current);
+          playTimeoutBeep();
           stopRecording();
           return 0;
         }
@@ -321,8 +363,64 @@ function VivaExam() {
 
   const showSideCamera = phase === "camera" || phase === "start" || phase === "interview" || phase === "submit";
 
+  const saveAttemptState = useCallback(
+    (extra = {}) => {
+      if (!attemptStorageKey) return;
+      const payload = {
+        sessionId,
+        phase,
+        questionData,
+        results,
+        examProtectionActive,
+        updatedAt: Date.now(),
+        ...extra,
+      };
+      try {
+        sessionStorage.setItem(attemptStorageKey, JSON.stringify(payload));
+      } catch (_) {
+        // no-op
+      }
+    },
+    [attemptStorageKey, examProtectionActive, phase, questionData, results, sessionId]
+  );
+
+  const markRefreshTermination = useCallback(() => {
+    saveAttemptState({ refreshTerminated: true, refreshTerminatedAt: Date.now() });
+  }, [saveAttemptState]);
+
+  const sendIncidentBeacon = useCallback(
+    (incidentType, details = {}) => {
+      if (!sessionId || !navigator.sendBeacon) return;
+      try {
+        const payload = {
+          incident_type: incidentType,
+          details,
+          phase,
+          timestamp: new Date().toISOString(),
+        };
+        const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        navigator.sendBeacon(`${VIVA_API}/api/viva/session/${sessionId}/incident`, blob);
+      } catch (_) {
+        // no-op
+      }
+    },
+    [phase, sessionId]
+  );
+
   useEffect(() => {
     let mounted = true;
+    timeoutBeepRef.current = new Audio(TIMEOUT_BEEP_URL);
+    timeoutBeepRef.current.preload = "auto";
+
+    const readSavedAttempt = () => {
+      try {
+        const raw = sessionStorage.getItem(attemptStorageKey);
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) {
+        return null;
+      }
+    };
+
     const init = async () => {
       if (!testId || !studentId) {
         setError("Missing testId or studentId");
@@ -331,10 +429,47 @@ function VivaExam() {
       }
       try {
         setLoadingMessage("Initializing test session...");
+        const saved = readSavedAttempt();
         const res = await api.post("/api/viva/session/init", { testId, studentId });
         if (!mounted) return;
-        setSessionId(res.data.session_id);
-        setPhase("confirm");
+        const sid = res.data.session_id;
+        setSessionId(sid);
+
+        const stateRes = await api.get(`/api/viva/session/${sid}/state`);
+        if (!mounted) return;
+        const state = stateRes.data || {};
+
+        if (state.terminated) {
+          if (saved?.sessionId === sid && saved?.results && POST_SUBMIT_PHASES.has(saved.phase)) {
+            setResults(saved.results);
+            setPhase(saved.phase);
+          } else {
+            setError("Exam ended because the session was interrupted before submission.");
+            setPhase("error");
+          }
+          return;
+        }
+
+        if (state.interview_started) {
+          startFlowLockRef.current = true;
+          setError("This exam session was already started. Refresh is not allowed before final submission.");
+          setPhase("error");
+          return;
+        }
+
+        if (!state.id_confirmed) {
+          setPhase("confirm");
+          return;
+        }
+        if (!state.rules_accepted) {
+          setPhase("rules");
+          return;
+        }
+        if (!state.camera_checked) {
+          setPhase("camera");
+          return;
+        }
+        setPhase("start");
       } catch (e) {
         setError(e?.response?.data?.detail || "Could not initialize viva");
         setPhase("error");
@@ -343,12 +478,37 @@ function VivaExam() {
     init();
     return () => {
       mounted = false;
+      if (timeoutBeepRef.current) {
+        timeoutBeepRef.current.pause();
+        timeoutBeepRef.current = null;
+      }
       stopCamera();
       stopRecorderStream();
       if (recordTimerRef.current) clearInterval(recordTimerRef.current);
       if (randomSnapshotRef.current) clearTimeout(randomSnapshotRef.current);
     };
-  }, [api, studentId, testId]);
+  }, [api, attemptStorageKey, studentId, testId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    saveAttemptState();
+  }, [examProtectionActive, phase, questionData, results, saveAttemptState, sessionId]);
+
+  useEffect(() => {
+    if (!sessionId) return undefined;
+    if (!startFlowLockRef.current || !PRE_SUBMIT_PHASES.has(phase)) return undefined;
+
+    const onBeforeUnload = (event) => {
+      markRefreshTermination();
+      sendIncidentBeacon("page_refresh_attempt", { reason: "beforeunload" });
+      sendIncidentBeacon("page_unload", { reason: "beforeunload" });
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [markRefreshTermination, phase, sendIncidentBeacon, sessionId]);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -456,14 +616,16 @@ function VivaExam() {
   };
 
   const handleStartTest = async () => {
+    startFlowLockRef.current = true;
     setExamProtectionActive(true);
+    saveAttemptState({ phase: "loading" });
     const fsOk = await requestFullscreen();
     if (!fsOk) {
       logIncident("fullscreen_request_denied");
       showWarning("Fullscreen Required", "Please allow fullscreen mode to continue the exam.");
     }
 
-    setLoadingMessage("Playing welcome message...");
+    setLoadingMessage("Get ready for the exam...");
     setPhase("loading");
     const res = await api.post(`/api/viva/session/${sessionId}/start-test`);
     await playAudio(res.data.welcome_audio_url);
@@ -473,6 +635,7 @@ function VivaExam() {
   const handleSubmitInterview = async () => {
     setIsSubmitting(true);
     setExamProtectionActive(false);
+    startFlowLockRef.current = false;
     if (document.fullscreenElement && document.exitFullscreen) {
       try {
         await document.exitFullscreen();
@@ -484,6 +647,7 @@ function VivaExam() {
     setResults(res.data);
     setIsSubmitting(false);
     setPhase("summary");
+    saveAttemptState({ results: res.data, phase: "summary" });
   };
 
   const submitFeedback = async () => {
@@ -492,6 +656,7 @@ function VivaExam() {
       recommendation: feedbackText,
     });
     setPhase("done");
+    saveAttemptState({ phase: "done" });
     stopCamera();
   };
 
@@ -521,9 +686,11 @@ function VivaExam() {
         <div className={`viva-layout ${showSideCamera ? "" : "single-col"}`}>
           <div className="viva-main">
             {phase === "loading" && (
-              <div className="card viva-card stage-card stage-card-centered p-4 text-center">
-                <div className="spinner-border text-primary mb-3" />
-                <div>{loadingMessage}</div>
+              <div className="card viva-card stage-card stage-card-centered p-4 text-center loading-card">
+                <div className="loading-card-inner">
+                  <div className="spinner-border text-primary mb-3" />
+                  <div>{loadingMessage}</div>
+                </div>
               </div>
             )}
 
@@ -545,11 +712,13 @@ function VivaExam() {
               <div className="card viva-card stage-card stage-card-centered p-4">
                 <h4>Viva Rules & Regulations</h4>
                 <ul className="mt-3">
-                  <li>Camera monitoring remains active throughout the exam.</li>
-                  <li>Only one face must be visible.</li>
-                  <li>Each question has 30 seconds answer time.</li>
-                  <li>Speak clearly and finish before timer ends.</li>
-                  <li>Do not leave the viva window during the exam.</li>
+                  <li>Please ensure you are in a noise free environment with proper lighting and a stable internet connection.</li>
+                  <li>Listen to each question first. Start speaking only when the timer starts.</li>
+                  <li>You have a maximum of 30 seconds for each answer. Speak clearly and finish before the timer ends.</li>
+                  <li>Keep your face clearly visible throughout the exam. Only one face should be in the camera frame.</li>
+                  <li>Stay on the exam screen in fullscreen throughout the viva. Do not switch tabs or windows.</li>
+                  <li>Proctoring stays active for the full exam. Your activities are logged.</li>
+                  <li>If suspicious activity is detected after review your exam may be disqualified and not considered for evaluation.</li>
                 </ul>
                 <div className="form-check mt-3">
                   <input
@@ -582,7 +751,7 @@ function VivaExam() {
             {phase === "start" && (
               <div className="card viva-card stage-card p-4">
                 <h4>Ready to Begin</h4>
-                <p>Click Start Test to begin the viva sequence.</p>
+                <p>Click Start Test to begin the viva .</p>
                 <button className="btn btn-primary" onClick={handleStartTest}>
                   Start Test
                 </button>
@@ -606,7 +775,11 @@ function VivaExam() {
                   </div>
                 )}
                 <div className="mt-3">
-                  <button className="btn btn-primary" onClick={stopRecording} disabled={!isRecording || isSubmitting}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={stopRecording}
+                    disabled={!isRecording || isSubmitting || warningModal.show}
+                  >
                     Done & Next
                   </button>
                 </div>
@@ -617,7 +790,7 @@ function VivaExam() {
               <div className="card viva-card stage-card stage-card-centered p-4">
                 <h4>All questions answered</h4>
                 <p>Please submit to generate your final score and feedback.</p>
-                <button className="btn btn-success" onClick={handleSubmitInterview} disabled={isSubmitting}>
+                <button className="btn btn-success" onClick={handleSubmitInterview} disabled={isSubmitting || warningModal.show}>
                   {isSubmitting ? "Preparing results..." : "Submit and Show Results"}
                 </button>
               </div>
@@ -650,27 +823,56 @@ function VivaExam() {
 
             {phase === "detailed" && results && (
               <div className="card viva-card stage-card stage-card-wide stage-card-centered p-4">
-                <h3>Interview Report Card</h3>
+                <div className="report-head">
+                  <div>
+                    <h3 className="mb-1">Interview Report Card</h3>
+                    <p className="report-subtitle mb-0">
+                      {results.detailed.length} question{results.detailed.length === 1 ? "" : "s"} evaluated
+                    </p>
+                  </div>
+                  <div className="report-mini-stat">
+                    <span>Overall</span>
+                    <strong>{summary?.percentage ?? 0}%</strong>
+                  </div>
+                </div>
                 {results.detailed.map((item, idx) => {
                   const avgPercent = Math.max(0, Math.min(100, ((item.average_score || 0) / 10) * 100));
+                  const isOpen = expandedDetailIndex === idx;
                   return (
                     <div key={`${idx}_${item.question}`} className="detail-item">
-                      <p className="mb-2">
-                        <strong>Q{idx + 1}:</strong> {item.question}
-                      </p>
-                      <div className="row g-2 mb-2">
-                        <div className="col-md-3"><span className="score-tag">Kimi {item.kimi_score}/10</span></div>
-                        <div className="col-md-3"><span className="score-tag">Gemini {item.gemini_score}/10</span></div>
-                        <div className="col-md-3"><span className="score-tag">Llama {item["llama_3.3_score"]}/10</span></div>
-                        <div className="col-md-3"><span className="score-tag score-tag-avg">Average {item.average_score}/10</span></div>
-                      </div>
-                      <div className="progress mb-2" role="progressbar" aria-valuenow={avgPercent} aria-valuemin="0" aria-valuemax="100">
+                      <button
+                        type="button"
+                        className="detail-toggle"
+                        onClick={() => setExpandedDetailIndex(isOpen ? -1 : idx)}
+                        aria-expanded={isOpen}
+                        title={isOpen ? "Hide feedback" : "View feedback"}
+                      >
+                        <div className="detail-toggle-main">
+                          <p className="mb-1 detail-question">
+                            <strong>Q{idx + 1}:</strong> {item.question}
+                          </p>
+                          <div className="detail-avg-inline">AI Score {item.average_score}/10</div>
+                        </div>
+                        <div className="detail-toggle-actions">
+                          <span className="feedback-hint">{isOpen ? "Hide Feedback" : "View Feedback"}</span>
+                          <span className={`detail-chevron ${isOpen ? "open" : ""}`}>▾</span>
+                        </div>
+                      </button>
+                      <div className="progress mb-2 mt-2" role="progressbar" aria-valuenow={avgPercent} aria-valuemin="0" aria-valuemax="100">
                         <div className="progress-bar" style={{ width: `${avgPercent}%` }}>{avgPercent.toFixed(0)}%</div>
                       </div>
-                      <div className="feedback-box">
-                        <div><strong>Gemini:</strong> {item.gemini_feedback}</div>
-                        <div><strong>Kimi:</strong> {item.kimi_feedback}</div>
-                        <div><strong>Llama:</strong> {item.llama_feedback}</div>
+                      <div className={`detail-expand ${isOpen ? "open" : ""}`}>
+                        <div className="row g-2 mb-2">
+                          <div className="col-md-3"><span className="score-tag">Kimi {item.kimi_score}/10</span></div>
+                          <div className="col-md-3"><span className="score-tag">Gemini {item.gemini_score}/10</span></div>
+                          <div className="col-md-3"><span className="score-tag">Llama {item["llama_3.3_score"]}/10</span></div>
+                          <div className="col-md-3"><span className="score-tag score-tag-avg">Average {item.average_score}/10</span></div>
+                        </div>
+                        <div className="feedback-box">
+                          <div><strong>Gemini:</strong> {item.gemini_feedback}</div>
+                          <div><strong>Kimi:</strong> {item.kimi_feedback}</div>
+                          <div><strong>Llama:</strong> {item.llama_feedback}</div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -753,13 +955,6 @@ function VivaExam() {
                 }}
               >
                 Return to Fullscreen
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => setWarningModal({ show: false, title: "", message: "" })}
-              >
-                Dismiss
               </button>
             </div>
           </div>
