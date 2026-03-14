@@ -1,0 +1,24 @@
+[
+    {
+        "question": "How has the rise of Artificial Intelligence impacted global labor markets in recent years?",
+        "answer": "rise of artificial intelligence has impacted the Global market in different ways in some cases we can see the job has been created in some sector particularly in High Court sector related to Ai development but on the other hand we can see the job losses particularly in the jobs where there is possibility of automation or use of here it is mixed",
+        "kimi_score": 4.0,
+        "gemini_score": 6.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 5.33,
+        "kimi_feedback": "Partially accurate but lacks depth, structure, and key terminology like automation, reskilling, and sectoral examples.",
+        "gemini_feedback": "The answer is accurate and addresses the core of the question but lacks depth and structure.",
+        "llama_feedback": "Answer lacks clarity and specific examples but covers the mixed impact of AI on labor markets"
+    },
+    {
+        "question": "Why is climate finance a critical issue in international climate negotiations?",
+        "answer": "private finance Railway critical issue in international climate negotiation as we know the climate change is something which is affecting the whole world it is not discriminating with developing or developed code but if you see the historical pattern most of the climate situated issues over the pollution is contributed by the development negotiation transfer of money from developed to developing is important",
+        "kimi_score": 3.0,
+        "gemini_score": 4.0,
+        "llama_3.3_score": 6.0,
+        "average_score": 4.33,
+        "kimi_feedback": "Answer lacks structure, misuses terms like 'private finance Railway', and fails to explain climate finance mechanisms or equity principles clearly.",
+        "gemini_feedback": "The answer touches on some relevant points but lacks clarity and structure, and the reasoning is weak.",
+        "llama_feedback": "Answer demonstrates some understanding of climate finance but lacks clarity and proper terminology"
+    }
+]

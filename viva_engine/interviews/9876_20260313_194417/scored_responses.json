@@ -1,0 +1,24 @@
+[
+    {
+        "question": "How has the rise of Artificial Intelligence impacted global labor markets in recent years?",
+        "answer": "Could not understand audio.",
+        "kimi_score": 0.0,
+        "gemini_score": 0.0,
+        "llama_3.3_score": 0.0,
+        "average_score": 0.0,
+        "kimi_feedback": "No answer provided due to audio issue.",
+        "gemini_feedback": "The student was unable to provide any answer due to audio issues.",
+        "llama_feedback": "No answer provided due to audio issue"
+    },
+    {
+        "question": "Why is climate finance a critical issue in international climate negotiations?",
+        "answer": "Could not understand audio.",
+        "kimi_score": 0.0,
+        "gemini_score": 0.0,
+        "llama_3.3_score": 0.0,
+        "average_score": 0.0,
+        "kimi_feedback": "No answer provided due to audio issue, so no criteria could be met.",
+        "gemini_feedback": "The student was unable to provide an answer due to audio issues.",
+        "llama_feedback": "Unable to evaluate answer due to audio issue"
+    }
+]

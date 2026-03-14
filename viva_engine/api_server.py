@@ -239,9 +239,10 @@ def _finalize_and_submit(session: Dict[str, Any]) -> Dict[str, Any]:
     except Exception:
         pass
 
-    obtained = sum(question_averages)
+    obtained_raw = sum(question_averages)
+    obtained = int(round(obtained_raw))
     total_marks = len(question_averages) * 10
-    percentage = round((obtained / total_marks) * 100, 2) if total_marks > 0 else 0
+    percentage = int(round((obtained / total_marks) * 100)) if total_marks > 0 else 0
 
     def grade(percent: float) -> Dict[str, str]:
         if percent >= 80:
