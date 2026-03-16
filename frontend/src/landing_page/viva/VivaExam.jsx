@@ -92,6 +92,7 @@ function VivaExam() {
   const [isRecording, setIsRecording] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState(null);
+  const [animatedScore, setAnimatedScore] = useState(0);
   const [expandedDetailIndex, setExpandedDetailIndex] = useState(0);
   const [feedbackRating, setFeedbackRating] = useState(5);
   const [feedbackText, setFeedbackText] = useState("");
@@ -661,7 +662,32 @@ function VivaExam() {
   };
 
   const summary = results?.summary || null;
-  const scorePercent = summary?.percentage || 0;
+  const scorePercent = Number(summary?.percentage || 0);
+  const boundedScore = Math.max(0, Math.min(100, animatedScore));
+  const ringRadius = 92;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference * (1 - boundedScore / 100);
+
+  useEffect(() => {
+    if (phase !== "summary" || !summary) return undefined;
+    const target = Math.max(0, Math.min(100, scorePercent));
+    const durationMs = 1200;
+    let rafId;
+    let startTime;
+
+    setAnimatedScore(0);
+
+    const tick = (now) => {
+      if (typeof startTime !== "number") startTime = now;
+      const progress = Math.min(1, (now - startTime) / durationMs);
+      const eased = 1 - (1 - progress) ** 3;
+      setAnimatedScore(target * eased);
+      if (progress < 1) rafId = window.requestAnimationFrame(tick);
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [phase, scorePercent, summary]);
 
   return (
     <div className="viva-shell">
@@ -799,7 +825,20 @@ function VivaExam() {
             {phase === "summary" && results && summary && (
               <div className="card viva-card stage-card stage-card-wide stage-card-centered p-4 text-center">
                 <h3>Final Result</h3>
-                <div className="score-circle mt-3" style={{ "--score": scorePercent }}>
+                <div className="score-circle mt-3" role="img" aria-label={`Score ${Math.round(summary.obtained_marks)} out of ${Math.round(summary.total_marks)}`}>
+                  <svg className="score-ring" viewBox="0 0 240 240" aria-hidden="true">
+                    <circle className="score-ring-track" cx="120" cy="120" r={ringRadius} />
+                    <circle
+                      className="score-ring-progress"
+                      cx="120"
+                      cy="120"
+                      r={ringRadius}
+                      style={{
+                        strokeDasharray: ringCircumference,
+                        strokeDashoffset: ringOffset,
+                      }}
+                    />
+                  </svg>
                   <div className="score-inner">
                     {Math.round(summary.obtained_marks)} / {Math.round(summary.total_marks)}
                   </div>
@@ -869,8 +908,8 @@ function VivaExam() {
                           <div className="col-md-3"><span className="score-tag score-tag-avg">Average {item.average_score}/10</span></div>
                         </div>
                         <div className="feedback-box">
-                          <div><strong>Gemini:</strong> {item.gemini_feedback}</div>
                           <div><strong>Kimi:</strong> {item.kimi_feedback}</div>
+                          <div><strong>Gemini:</strong> {item.gemini_feedback}</div>
                           <div><strong>Llama:</strong> {item.llama_feedback}</div>
                         </div>
                       </div>

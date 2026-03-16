@@ -217,14 +217,41 @@
 }
 
 .score-circle {
-  --score: 0;
+  position: relative;
   width: 240px;
   height: 240px;
-  border-radius: 50%;
   margin: 0 auto;
   display: grid;
   place-items: center;
-  background: conic-gradient(#0d6efd calc(var(--score) * 1%), #d9e8ff 0);
+  border-radius: 50%;
+  transition: transform 0.22s ease;
+}
+
+.score-circle:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.score-ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.score-ring-track,
+.score-ring-progress {
+  fill: none;
+  stroke-width: 30;
+}
+
+.score-ring-track {
+  stroke: #d9e8ff;
+}
+
+.score-ring-progress {
+  stroke: #0d6efd;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.18s linear;
+  filter: drop-shadow(0 4px 8px rgba(13, 110, 253, 0.28));
 }
 
 .score-inner {
@@ -239,6 +266,29 @@
   font-weight: 800;
   color: #0d6efd;
   box-shadow: inset 0 0 0 1px #e5edfb;
+  animation: scoreInnerPulse 1.9s ease-in-out infinite;
+}
+
+@keyframes scoreInnerPulse {
+  0% {
+    box-shadow: inset 0 0 0 1px #e5edfb, 0 0 0 rgba(13, 110, 253, 0.14);
+  }
+  50% {
+    box-shadow: inset 0 0 0 1px #e5edfb, 0 8px 20px rgba(13, 110, 253, 0.14);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px #e5edfb, 0 0 0 rgba(13, 110, 253, 0.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-inner {
+    animation: none;
+  }
+
+  .score-ring-progress {
+    transition: none;
+  }
 }
 
 .summary-grid {

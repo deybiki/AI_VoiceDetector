@@ -19,7 +19,7 @@ function Navbar() {
         <Link class="navbar-brand" to="/">
           <img
             className="ms-4"
-            src="proj_img/logo2.png"
+            src="proj_img/vivapro_favicon_clean.png"
             style={{ width: "18%" }}
             alt="logo"
           />
